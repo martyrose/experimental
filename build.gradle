@@ -35,7 +35,7 @@ dependencies {
     compile 'org.cliffc:high-scale-lib:1.1.2'
     compile 'net.sf.jgap:jgap:3.6.2'
 
-    testCompile 'junit:junit:4.10'
+    compile 'junit:junit:4.10'
     runtime 'postgresql:postgresql:9.1-901.jdbc4'
 
     //logback
