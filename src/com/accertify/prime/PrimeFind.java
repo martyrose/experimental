@@ -1,8 +1,8 @@
 package com.accertify.prime;
 
+import com.accertify.random.MersenneTwister;
 import com.accertify.util.Log;
 import com.accertify.util.LogFactory;
-import sun.security.util.BigInt;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
@@ -17,7 +17,7 @@ import java.security.SecureRandom;
 public class PrimeFind {
     protected static transient Log log = LogFactory.getLog(PrimeFind.class);
 
-    
+
     public static void main(String[] args) {
         byte[] seed = SecureRandom.getSeed(8);
         MersenneTwister twister = new MersenneTwister(toLong(seed));
@@ -33,7 +33,7 @@ public class PrimeFind {
 
 
     class Factors {
-        
+
     }
 
         public static long toLong(byte[] data) {
