@@ -1,5 +1,4 @@
 apply plugin: 'java'
-apply plugin: 'eclipse'
 apply plugin: 'idea'
 apply plugin: 'maven'
 
@@ -47,7 +46,7 @@ dependencies {
         compile("org.slf4j:${it}:1.7.2")
     }
 
-    //Accertify core
+    // Accertify core
     compile 'com.accertify.core:core:1.5.0.FINAL'
     // compile fileTree(dir: "../accertify_core/build/libs", includes: ['core.jar'])
 
@@ -97,7 +96,7 @@ dependencies {
 }
 
 //basename for generated jar and war
-archivesBaseName = 'autodecision'
+archivesBaseName = 'mrose-beta'
 
 //override the compiler options
 sourceCompatibility = "1.7"
@@ -107,27 +106,6 @@ compileJava {
     options.fork(memoryInitialSize: "256M", memoryMaximumSize: "512M")
     options.debug(debugLevel: "lines,vars,source")
 }
-
-//enable jar generation
-jar.enabled = true
-
-//version is defined by currentBranch.txt
-def releaseVersion = file('currentBranch.txt').getText('UTF8').trim()
-
-task dist(type: Tar, dependsOn: [jar]) {
-    description = "Creates the distribution archive."
-
-    appendix = 'dist'
-    compression = Compression.GZIP
-
-    into('autodecision') {
-        into('lib') {
-            from jar.archivePath
-            from configurations.runtime
-        }
-    }
-}
-
 
 def checkForRemoteDebug() {
     return project.hasProperty('remoteDebug') && remoteDebug != null && remoteDebug == "true"
