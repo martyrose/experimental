@@ -1,4 +1,4 @@
-package com.accertify.prime;
+package com.accertify.random;
 
 import java.io.*;
 import java.util.*;

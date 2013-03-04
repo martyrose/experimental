@@ -1,5 +1,7 @@
 package com.accertify.socket;
 
+import com.accertify.crypt.BCrypt;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
