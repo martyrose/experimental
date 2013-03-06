@@ -1,11 +1,5 @@
 package com.accertify.monitor;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.Arrays;
-import com.accertify.util.Log;
-import com.accertify.util.LogFactory;
-
 /*
  * Copyright 2011 LMAX Ltd.
  *
@@ -21,6 +15,13 @@ import com.accertify.util.LogFactory;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import com.accertify.util.Log;
+import com.accertify.util.LogFactory;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Arrays;
 
 /**
  * Histogram for tracking the frequency of observations of values below interval upper bounds.
