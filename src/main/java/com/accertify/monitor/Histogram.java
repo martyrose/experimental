@@ -1,5 +1,3 @@
-package com.accertify.monitor;
-
 /*
  * Copyright 2011 LMAX Ltd.
  *
@@ -15,32 +13,45 @@ package com.accertify.monitor;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.accertify.monitor;
 
-import com.accertify.util.Log;
-import com.accertify.util.LogFactory;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Arrays;
 
 /**
- * Histogram for tracking the frequency of observations of values below interval upper bounds.
+ * Histogram for tracking the frequency of observations of values below interval upper bounds.<p/>
  *
- * This class is useful for recording timings in nanoseconds across a large number of observations
- * when high performance is required.
+ * This class is useful for recording timings across a large number of observations
+ * when high performance is required.<p/>
+ *
+ * The interval bounds are used to define the ranges of the histogram buckets. If provided bounds
+ * are [10,20,30,40,50] then there will be five buckets, accessible by index 0-4. Any value
+ * 0-10 will fall into the first interval bar, values 11-20 will fall into the
+ * second bar, and so on.
  */
-public final class Histogram {
-    protected static transient Log log = LogFactory.getLog(Histogram.class);
+public final class Histogram
+{
+    private static final Logger log = LoggerFactory.getLogger(Histogram.class);
 
+    // tracks the upper intervals of each of the buckets/bars
     private final long[] upperBounds;
+    // tracks the count of the corresponding bucket
     private final long[] counts;
+    // minimum value so far observed
     private long minValue = Long.MAX_VALUE;
+    // maximum value so far observed
     private long maxValue = 0L;
 
     /**
      * Create a new Histogram with a provided list of interval bounds.
      *
-     * @param upperBounds of the intervals.
+     * @param upperBounds of the intervals. Bounds must be provided in order least to greatest, and
+     * lowest bound must be greater than or equal to 1.
+     * @throws IllegalArgumentException if any of the upper bounds are less than or equal to zero
+     * @throws IllegalArgumentException if the bounds are not in order, least to greatest
      */
     public Histogram(final long[] upperBounds)
     {
@@ -50,9 +61,15 @@ public final class Histogram {
         this.counts = new long[upperBounds.length];
     }
 
+    /**
+     * Validates the input bounds; used by constructor only.
+     */
     private void validateBounds(final long[] upperBounds)
     {
         long lastBound = -1L;
+        if (upperBounds.length <= 0) {
+            throw new IllegalArgumentException("Must provide at least one interval");
+        }
         for (final long bound : upperBounds)
         {
             if (bound <= 0L)
@@ -70,7 +87,7 @@ public final class Histogram {
     }
 
     /**
-     * Size of the list of interval bars.
+     * Size of the list of interval bars (ie: count of interval bars).
      *
      * @return size of the interval bar list.
      */
@@ -105,13 +122,14 @@ public final class Histogram {
      * Add an observation to the histogram and increment the counter for the interval it matches.
      *
      * @param value for the observation to be added.
-     * @return return true if in the range of intervals otherwise false.
+     * @return return true if in the range of intervals and successfully added observation; otherwise false.
      */
     public boolean addObservation(final long value)
     {
         int low = 0;
         int high = upperBounds.length - 1;
 
+        // do a classic binary search to find the high value
         while (low < high)
         {
             int mid = low + ((high - low) >> 1);
@@ -125,6 +143,7 @@ public final class Histogram {
             }
         }
 
+        // if the binary search found an eligible bucket, increment
         if (value <= upperBounds[high])
         {
             counts[high]++;
@@ -133,9 +152,16 @@ public final class Histogram {
             return true;
         }
 
+        // otherwise value was not found
         return false;
     }
 
+    /**
+     * Track minimum and maximum observations
+     *
+     * @see getMin
+     * @see getMax
+     */
     private void trackRange(final long value)
     {
         if (value < minValue)
@@ -150,13 +176,16 @@ public final class Histogram {
     }
 
     /**
-     * Add observations from another Histogram into this one.
+     * Add observations from another Histogram into this one.<p/>
+     *
      * Histograms must have the same intervals.
      *
      * @param histogram from which to add the observation counts.
+     * @throws IllegalArgumentException if interval count or values do not match exactly
      */
     public void addObservations(final Histogram histogram)
     {
+        // validate the intervals
         if (upperBounds.length != histogram.upperBounds.length)
         {
             throw new IllegalArgumentException("Histograms must have matching intervals");
@@ -170,17 +199,19 @@ public final class Histogram {
             }
         }
 
+        // increment all of the internal counts
         for (int i = 0, size = counts.length; i < size; i++)
         {
             counts[i] += histogram.counts[i];
         }
 
+        // refresh the minimum and maximum observation ranges
         trackRange(histogram.minValue);
         trackRange(histogram.maxValue);
     }
 
     /**
-     * Clear the list of interval counters.
+     * Clear the list of interval counters
      */
     public void clear()
     {
@@ -231,24 +262,32 @@ public final class Histogram {
     }
 
     /**
-     * Calculate the mean of all recorded observations.
+     * Calculate the mean of all recorded observations.<p/>
      *
-     * The mean is calculated by the summing the mid points of each interval multiplied by the count
+     * The mean is calculated by summing the mid points of each interval multiplied by the count
      * for that interval, then dividing by the total count of observations.  The max and min are
-     * considered for adjusting the top and bottom bin when calculating the mid point.
+     * considered for adjusting the top and bottom bin when calculating the mid point, this
+     * minimises skew if the observed values are very far away from the possible histogram values.
      *
      * @return the mean of all recorded observations.
      */
     public BigDecimal getMean()
     {
+        // early exit to avoid divide by zero later
         if (0L == getCount())
         {
             return BigDecimal.ZERO;
         }
 
+        // precalculate the initial lower bound; needed in the loop
         long lowerBound = counts[0] > 0L ? minValue : 0L;
+        // use BigDecimal to avoid precision errors
         BigDecimal total = BigDecimal.ZERO;
 
+        // midpoint is calculated as the average between the lower and upper bound
+        // (after taking into account the min & max values seen)
+        // then, simply multiply midpoint by the count of values at the interval (intervalTotal)
+        // and add to running total (total)
         for (int i = 0, size = upperBounds.length; i < size; i++)
         {
             if (0L != counts[i])
@@ -260,6 +299,7 @@ public final class Histogram {
                 total = total.add(intervalTotal);
             }
 
+            // and recalculate the lower bound for the next time around the loop
             lowerBound = Math.max(upperBounds[i] + 1L, minValue);
         }
 
@@ -287,10 +327,13 @@ public final class Histogram {
     }
 
     /**
-     * Get the interval upper bound for a given factor of the observation population.
+     * Get the interval upper bound for a given factor of the observation population.<p/>
+     *
+     * Note this does not get the actual percentile measurement, it only gets the bucket
      *
      * @param factor representing the size of the population.
      * @return the interval upper bound.
+     * @throws IllegalArgumentException if factor &lt; 0.0 or factor &gt; 1.0
      */
     public long getUpperBoundForFactor(final double factor)
     {
@@ -303,8 +346,7 @@ public final class Histogram {
         final long tailTotal = totalCount - Math.round(totalCount * factor);
         long tailCount = 0L;
 
-        // TODO Implement a newer method that is smarter and does some smoothing between these;
-        // and returns a big decimal
+        // reverse search the intervals ('tailCount' from end)
         for (int i = counts.length - 1; i >= 0; i--)
         {
             if (0L != counts[i])
@@ -325,17 +367,26 @@ public final class Histogram {
     {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("Histogram {");
-        sb.append("count=").append(getCount()).append(", ");
+        sb.append("Histogram{");
+
         sb.append("min=").append(getMin()).append(", ");
         sb.append("max=").append(getMax()).append(", ");
         sb.append("mean=").append(getMean()).append(", ");
-        sb.append("50%=").append(getUpperBoundForFactor(0.50d)).append(", ");
-        sb.append("75%=").append(getUpperBoundForFactor(0.75d)).append(", ");
-        sb.append("90%=").append(getUpperBoundForFactor(0.90d)).append(", ");
-        sb.append("95%=").append(getUpperBoundForFactor(0.95d)).append(", ");
         sb.append("99%=").append(getTwoNinesUpperBound()).append(", ");
-        sb.append("99.99%=").append(getFourNinesUpperBound());
+        sb.append("99.99%=").append(getFourNinesUpperBound()).append(", ");
+
+        sb.append('[');
+        for (int i = 0, size = counts.length; i < size; i++)
+        {
+            sb.append(upperBounds[i]).append('=').append(counts[i]).append(", ");
+        }
+
+        if (counts.length > 0)
+        {
+            sb.setLength(sb.length() - 2);
+        }
+        sb.append(']');
+
         sb.append('}');
 
         return sb.toString();
