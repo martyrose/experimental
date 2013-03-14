@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicLongArray;
 
 /**
  * Histogram for tracking the frequency of observations of values below interval upper bounds.<p/>
@@ -40,7 +41,7 @@ public final class ConcurrentHistogram
     // tracks the upper intervals of each of the buckets/bars
     private final long[] upperBounds;
     // tracks the count of the corresponding bucket
-    private final long[] counts;
+    private final AtomicLongArray counts;
     // minimum value so far observed
     private AtomicLong minValue = new AtomicLong(Long.MAX_VALUE);
     // maximum value so far observed
@@ -59,7 +60,7 @@ public final class ConcurrentHistogram
         validateBounds(upperBounds);
 
         this.upperBounds = Arrays.copyOf(upperBounds, upperBounds.length);
-        this.counts = new long[upperBounds.length];
+        this.counts = new AtomicLongArray(upperBounds.length);
     }
 
     /**
@@ -116,7 +117,7 @@ public final class ConcurrentHistogram
      */
     public long getCountAt(final int index)
     {
-        return counts[index];
+        return counts.get(index);
     }
 
     /**
@@ -147,7 +148,7 @@ public final class ConcurrentHistogram
         // if the binary search found an eligible bucket, increment
         if (value <= upperBounds[high])
         {
-            counts[high]++;
+            counts.getAndIncrement(high);
             trackRange(value);
 
             return true;
@@ -208,9 +209,9 @@ public final class ConcurrentHistogram
         }
 
         // increment all of the internal counts
-        for (int i = 0, size = counts.length; i < size; i++)
+        for (int i = 0, size = counts.length(); i < size; i++)
         {
-            counts[i] += histogram.counts[i];
+            counts.getAndAdd(i, histogram.counts.get(i));
         }
 
         // refresh the minimum and maximum observation ranges
@@ -226,9 +227,9 @@ public final class ConcurrentHistogram
         maxValue.set(0L);
         minValue.set(Long.MAX_VALUE);
 
-        for (int i = 0, size = counts.length; i < size; i++)
+        for (int i = 0, size = counts.length(); i < size; i++)
         {
-            counts[i] = 0L;
+            counts.set(i, 0l);
         }
     }
 
@@ -241,9 +242,9 @@ public final class ConcurrentHistogram
     {
         long count = 0L;
 
-        for (int i = 0, size = counts.length; i < size; i++)
+        for (int i = 0, size = counts.length(); i < size; i++)
         {
-            count += counts[i];
+            count += counts.get(i);
         }
 
         return count;
@@ -288,7 +289,7 @@ public final class ConcurrentHistogram
         }
 
         // precalculate the initial lower bound; needed in the loop
-        long lowerBound = counts[0] > 0L ? minValue.get() : 0L;
+        long lowerBound = counts.get(0) > 0L ? minValue.get() : 0L;
         // use BigDecimal to avoid precision errors
         BigDecimal total = BigDecimal.ZERO;
 
@@ -298,12 +299,12 @@ public final class ConcurrentHistogram
         // and add to running total (total)
         for (int i = 0, size = upperBounds.length; i < size; i++)
         {
-            if (0L != counts[i])
+            if (0L != counts.get(i))
             {
                 long upperBound = Math.min(upperBounds[i], maxValue.get());
                 long midPoint = lowerBound + ((upperBound - lowerBound) / 2L);
 
-                BigDecimal intervalTotal = new BigDecimal(midPoint).multiply(new BigDecimal(counts[i]));
+                BigDecimal intervalTotal = new BigDecimal(midPoint).multiply(new BigDecimal(counts.get(i)));
                 total = total.add(intervalTotal);
             }
 
@@ -355,11 +356,11 @@ public final class ConcurrentHistogram
         long tailCount = 0L;
 
         // reverse search the intervals ('tailCount' from end)
-        for (int i = counts.length - 1; i >= 0; i--)
+        for (int i = counts.length() - 1; i >= 0; i--)
         {
-            if (0L != counts[i])
+            if (0L != counts.get(i))
             {
-                tailCount += counts[i];
+                tailCount += counts.get(i);
                 if (tailCount >= tailTotal)
                 {
                     return upperBounds[i];
@@ -384,12 +385,12 @@ public final class ConcurrentHistogram
         sb.append("99.99%=").append(getFourNinesUpperBound()).append(", ");
 
         sb.append('[');
-        for (int i = 0, size = counts.length; i < size; i++)
+        for (int i = 0, size = counts.length(); i < size; i++)
         {
-            sb.append(upperBounds[i]).append('=').append(counts[i]).append(", ");
+            sb.append(upperBounds[i]).append('=').append(counts.get(i)).append(", ");
         }
 
-        if (counts.length > 0)
+        if (counts.length() > 0)
         {
             sb.setLength(sb.length() - 2);
         }
