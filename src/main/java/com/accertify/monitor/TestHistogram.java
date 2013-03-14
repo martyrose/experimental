@@ -4,6 +4,8 @@ import com.accertify.util.Log;
 import com.accertify.util.LogFactory;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.math3.random.RandomDataGenerator;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
@@ -19,13 +21,44 @@ public class TestHistogram {
 
     @Test
     public void testSimple1() {
-        Histogram h = new Histogram(new long[] {10,100,1000});
-        h.addObservation(25);
-        h.addObservation(50);
-        h.addObservation(60);
+        long[] trackPoints = new long[] {1,10, 250, 750, 1000, 5000};
+        long[] datum = new long[10000];
 
-        log.warn(h.toString());
+        RandomDataGenerator generator = new RandomDataGenerator();
+        for( int i=0; i<datum.length; i++) {
+            datum[i] = generator.nextLong(0, 900);
+        }
+
+        DisruptorHistogram h1 = new DisruptorHistogram(trackPoints);
+        Histogram h2 = new Histogram(trackPoints);
+        ConcurrentHistogram h3 = new ConcurrentHistogram(trackPoints);
+
+        for( int i=0; i<datum.length; i++) {
+            h1.addObservation(datum[i]);
+            h2.addObservation(datum[i]);
+            h3.addObservation(datum[i]);
+        }
+
+        Assert.assertTrue(h1.getMean().equals(h2.getMean()));
+        Assert.assertTrue(h2.getMean().equals(h3.getMean()));
+
+        Assert.assertTrue(h1.getMin() == h2.getMin());
+        Assert.assertTrue(h2.getMin() == h3.getMin());
+
+        Assert.assertTrue(h1.getMax() == h2.getMax());
+        Assert.assertTrue(h2.getMax() == h3.getMax());
+
+        double[] points = new double[] {.6, .75, .8, .9, .95, .99};
+        for( int i=0; i<points.length; i++ ) {
+            Assert.assertTrue(h1.getUpperBoundForFactor(points[i]) == h2.getUpperBoundForFactor(points[i]));
+            Assert.assertTrue(h2.getUpperBoundForFactor(points[i]) == h3.getUpperBoundForFactor(points[i]));
+        }
+
+
     }
+
+
+
 
     @Test
     public void emitShardsInfo() {

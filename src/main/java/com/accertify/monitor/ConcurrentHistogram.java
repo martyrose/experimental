@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Histogram for tracking the frequency of observations of values below interval upper bounds.<p/>
@@ -41,9 +42,9 @@ public final class ConcurrentHistogram
     // tracks the count of the corresponding bucket
     private final long[] counts;
     // minimum value so far observed
-    private long minValue = Long.MAX_VALUE;
+    private AtomicLong minValue = new AtomicLong(Long.MAX_VALUE);
     // maximum value so far observed
-    private long maxValue = 0L;
+    private AtomicLong maxValue = new AtomicLong(0L);
 
     /**
      * Create a new Histogram with a provided list of interval bounds.
@@ -164,14 +165,21 @@ public final class ConcurrentHistogram
      */
     private void trackRange(final long value)
     {
-        if (value < minValue)
         {
-            minValue = value;
+            long currentMinValue = -1;
+            while (value < (currentMinValue = minValue.get())) {
+                if (minValue.compareAndSet(currentMinValue, value)) {
+                    break;
+                }
+            }
         }
-
-        if (value > maxValue)
         {
-            maxValue = value;
+            long currentMaxValue = -1;
+            while (value > (currentMaxValue = maxValue.get())) {
+                if (maxValue.compareAndSet(currentMaxValue, value)) {
+                    break;
+                }
+            }
         }
     }
 
@@ -206,8 +214,8 @@ public final class ConcurrentHistogram
         }
 
         // refresh the minimum and maximum observation ranges
-        trackRange(histogram.minValue);
-        trackRange(histogram.maxValue);
+        trackRange(histogram.minValue.get());
+        trackRange(histogram.maxValue.get());
     }
 
     /**
@@ -215,8 +223,8 @@ public final class ConcurrentHistogram
      */
     public void clear()
     {
-        maxValue = 0L;
-        minValue = Long.MAX_VALUE;
+        maxValue.set(0L);
+        minValue.set(Long.MAX_VALUE);
 
         for (int i = 0, size = counts.length; i < size; i++)
         {
@@ -248,7 +256,7 @@ public final class ConcurrentHistogram
      */
     public long getMin()
     {
-        return minValue;
+        return minValue.get();
     }
 
     /**
@@ -258,7 +266,7 @@ public final class ConcurrentHistogram
      */
     public long getMax()
     {
-        return maxValue;
+        return maxValue.get();
     }
 
     /**
@@ -280,7 +288,7 @@ public final class ConcurrentHistogram
         }
 
         // precalculate the initial lower bound; needed in the loop
-        long lowerBound = counts[0] > 0L ? minValue : 0L;
+        long lowerBound = counts[0] > 0L ? minValue.get() : 0L;
         // use BigDecimal to avoid precision errors
         BigDecimal total = BigDecimal.ZERO;
 
@@ -292,7 +300,7 @@ public final class ConcurrentHistogram
         {
             if (0L != counts[i])
             {
-                long upperBound = Math.min(upperBounds[i], maxValue);
+                long upperBound = Math.min(upperBounds[i], maxValue.get());
                 long midPoint = lowerBound + ((upperBound - lowerBound) / 2L);
 
                 BigDecimal intervalTotal = new BigDecimal(midPoint).multiply(new BigDecimal(counts[i]));
@@ -300,7 +308,7 @@ public final class ConcurrentHistogram
             }
 
             // and recalculate the lower bound for the next time around the loop
-            lowerBound = Math.max(upperBounds[i] + 1L, minValue);
+            lowerBound = Math.max(upperBounds[i] + 1L, minValue.get());
         }
 
         return total.divide(new BigDecimal(getCount()), 2, RoundingMode.HALF_UP);
