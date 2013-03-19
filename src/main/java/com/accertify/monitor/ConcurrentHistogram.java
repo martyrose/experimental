@@ -167,7 +167,7 @@ public final class ConcurrentHistogram
     private void trackRange(final long value)
     {
         {
-            long currentMinValue = -1;
+            long currentMinValue;
             while (value < (currentMinValue = minValue.get())) {
                 if (minValue.compareAndSet(currentMinValue, value)) {
                     break;
@@ -175,7 +175,7 @@ public final class ConcurrentHistogram
             }
         }
         {
-            long currentMaxValue = -1;
+            long currentMaxValue;
             while (value > (currentMaxValue = maxValue.get())) {
                 if (maxValue.compareAndSet(currentMaxValue, value)) {
                     break;
