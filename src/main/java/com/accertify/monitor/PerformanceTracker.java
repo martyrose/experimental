@@ -17,17 +17,16 @@ public class PerformanceTracker {
     private final long[] upperBounds;
     private final long intervalTimeNanos;
 
-    private final AtomicLong currentSince;
+    private  final AtomicLong currentSince;
     private final AtomicReference<ConcurrentHistogram> current;
     private final AtomicReference<ConcurrentHistogram> previous;
+    private final AtomicReference<ConcurrentHistogram> historical;
 
-    private final ConcurrentHistogram historical;
-
-    public enum TimePeriod {
+    enum TimePeriod {
         CURRENT(new Supplier<ConcurrentHistogram>() {
             @Override
             public ConcurrentHistogram get() {
-                return  current.get();
+                return current.get();
             }
         }),
         PREVIOUS(new Supplier<ConcurrentHistogram>() {
@@ -60,7 +59,7 @@ public class PerformanceTracker {
         this.currentSince = new AtomicLong(System.nanoTime());
         this.current = new AtomicReference<>(new ConcurrentHistogram(upperBounds));
         this.previous = new AtomicReference<>(new ConcurrentHistogram(upperBounds));
-        this.historical = new ConcurrentHistogram(upperBounds);
+        this.historical = new AtomicReference<>(new ConcurrentHistogram(upperBounds));
 
         this.intervalTimeNanos = unit.toNanos(period);
     }
@@ -82,11 +81,11 @@ public class PerformanceTracker {
         swap();
 
         current.get().addObservation(value);
-        historical.addObservation(value);
+        historical.get().addObservation(value);
     }
 
     public double getCurrentRate() {
-        ;
+        return 0.0d;
     }
 
 //    public long getUpperBoundForFactor(double d) {
