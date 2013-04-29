@@ -26,19 +26,19 @@ public class PerformanceTracker {
         CURRENT(new Supplier<ConcurrentHistogram>() {
             @Override
             public ConcurrentHistogram get() {
-                return current.get();
+                return null;
             }
         }),
         PREVIOUS(new Supplier<ConcurrentHistogram>() {
             @Override
             public ConcurrentHistogram get() {
-                return previous.get();
+                return null;
             }
         }),
         HISTORICAL(new Supplier<ConcurrentHistogram>() {
             @Override
             public ConcurrentHistogram get() {
-                return historical.get();
+                return null;
             }
         });
 
