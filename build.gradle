@@ -37,6 +37,7 @@ dependencies {
 
     compile 'junit:junit:4.10'
     runtime 'postgresql:postgresql:9.1-901.jdbc4'
+    compile 'oracle.jdbc:ojdbc6_g:11.2.0.3.0'
 
     //logback
     compile 'ch.qos.logback:logback-classic:1.0.9'
