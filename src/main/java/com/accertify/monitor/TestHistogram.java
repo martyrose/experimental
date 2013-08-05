@@ -70,51 +70,63 @@ public class TestHistogram {
         }
     }
 
-    @Test
-    public void generateEndPointList() {
+    public long[] generateEndPointList(long resolution, long max) {
         TreeSet<Long> ts = new TreeSet<>();
-        for(int i=0;i<30;i++) {
-            long l = 1 << i;
-            ts.add(l);
-        }
 
-        log.warn(StringUtils.join(ts, ", "));
+        // .1 ms resolution from .1 ms => 45 ms
+        for (long i = resolution; i <= max; i += resolution) {
+            ts.add(i);
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("Size: " + ts.size());
+            log.debug(StringUtils.join(ts, ", "));
+        }
+        long[] values = new long[ts.size()];
+        int idx = 0;
+        for (Long x : ts) {
+            values[idx++] = x;
+        }
+        return values;
     }
 
-        @Test
+    @Test
     public void testConcurrentEndpoint() {
-        long[] segments = new long[30];
-        for(int i=0;i<30;i++) {
-            segments[i] = 1 << i;
-        }
+        long[] segments = generateEndPointList(10000, 45*1000000);
         ConcurrentHistogram ch = new ConcurrentHistogram(segments);
         Histogram h = new Histogram(segments);
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 100000; i++) {
             long s1 = System.nanoTime();
             ping();
             long s2 = System.nanoTime();
-            ch.addObservation(s2-s1);
-            h.addObservation(s2-s1);
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                ;
+            ch.addObservation(s2 - s1);
+            h.addObservation(s2 - s1);
+            if (log.isTraceEnabled()) {
+                log.trace("" + (s2 - s1));
             }
+//            try {
+//                Thread.sleep(100);
+//            } catch (InterruptedException e) {
+//                ;
+//            }
         }
 
         log.warn("Mean: " + ch.getMean() + " : " + h.getMean());
+        log.warn("50%: " + ch.getUpperBoundForFactor(.50) + " : " + h.getUpperBoundForFactor(.50));
         log.warn("75%: " + ch.getUpperBoundForFactor(.75) + " : " + h.getUpperBoundForFactor(.75));
         log.warn("90%: " + ch.getUpperBoundForFactor(.90) + " : " + h.getUpperBoundForFactor(.90));
         log.warn("95%: " + ch.getUpperBoundForFactor(.95) + " : " + h.getUpperBoundForFactor(.95));
         log.warn("99%: " + ch.getUpperBoundForFactor(.99) + " : " + h.getUpperBoundForFactor(.99));
-
+        log.warn("99.9%: " + ch.getUpperBoundForFactor(.999) + " : " + h.getUpperBoundForFactor(.999));
     }
 
     private static boolean ping() {
         try {
             URL u = new URL("http://localhost:8081/service/echo");
             try(InputStream is = u.openStream()) {
-                log.warn(StringUtils.strip(IOUtils.toString(is)));
+                String response = StringUtils.strip(IOUtils.toString(is));
+                if (log.isTraceEnabled()) {
+                    log.trace(response);
+                }
             }
             return true;
         } catch (Exception e) {
