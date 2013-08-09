@@ -43,9 +43,13 @@ public final class ConcurrentHistogram
     // tracks the count of the corresponding bucket
     private final AtomicLongArray counts;
     // minimum value so far observed
-    private AtomicLong minValue = new AtomicLong(Long.MAX_VALUE);
+    private final AtomicLong minValue = new AtomicLong(Long.MAX_VALUE);
     // maximum value so far observed
-    private AtomicLong maxValue = new AtomicLong(0L);
+    private final AtomicLong maxValue = new AtomicLong(0L);
+
+    // Used to efficiently and accurately track the mean
+    private final AtomicLong totalObservations = new AtomicLong(0);
+    private final AtomicLong totalCount = new AtomicLong(0);
 
     /**
      * Create a new Histogram with a provided list of interval bounds.
@@ -88,37 +92,6 @@ public final class ConcurrentHistogram
         }
     }
 
-    /**
-     * Size of the list of interval bars (ie: count of interval bars).
-     *
-     * @return size of the interval bar list.
-     */
-    public int getSize()
-    {
-        return upperBounds.length;
-    }
-
-    /**
-     * Get the upper bound of an interval for an index.
-     *
-     * @param index of the upper bound.
-     * @return the interval upper bound for the index.
-     */
-    public long getUpperBoundAt(final int index)
-    {
-        return upperBounds[index];
-    }
-
-    /**
-     * Get the count of observations at a given index.
-     *
-     * @param index of the observations counter.
-     * @return the count of observations at a given index.
-     */
-    public long getCountAt(final int index)
-    {
-        return counts.get(index);
-    }
 
     /**
      * Add an observation to the histogram and increment the counter for the interval it matches.
@@ -166,6 +139,10 @@ public final class ConcurrentHistogram
      */
     private void trackRange(final long value)
     {
+        {
+            totalCount.incrementAndGet();
+            totalObservations.addAndGet(value);
+        }
         {
             long currentMinValue;
             while (value < (currentMinValue = minValue.get())) {
@@ -215,8 +192,10 @@ public final class ConcurrentHistogram
         }
 
         // refresh the minimum and maximum observation ranges
-        trackRange(histogram.minValue.get());
-        trackRange(histogram.maxValue.get());
+        this.totalCount.set(histogram.totalCount.get());
+        this.totalObservations.set(histogram.totalObservations.get());
+        this.minValue.set(histogram.minValue.get());
+        this.maxValue.set(histogram.maxValue.get());
     }
 
     /**
@@ -226,6 +205,8 @@ public final class ConcurrentHistogram
     {
         maxValue.set(0L);
         minValue.set(Long.MAX_VALUE);
+        totalCount.set(0l);
+        totalObservations.set(0l);
 
         for (int i = 0, size = counts.length(); i < size; i++)
         {
@@ -240,14 +221,7 @@ public final class ConcurrentHistogram
      */
     public long getCount()
     {
-        long count = 0L;
-
-        for (int i = 0, size = counts.length(); i < size; i++)
-        {
-            count += counts.get(i);
-        }
-
-        return count;
+        return totalCount.longValue();
     }
 
     /**
@@ -288,51 +262,7 @@ public final class ConcurrentHistogram
             return BigDecimal.ZERO;
         }
 
-        // precalculate the initial lower bound; needed in the loop
-        long lowerBound = counts.get(0) > 0L ? minValue.get() : 0L;
-        // use BigDecimal to avoid precision errors
-        BigDecimal total = BigDecimal.ZERO;
-
-        // midpoint is calculated as the average between the lower and upper bound
-        // (after taking into account the min & max values seen)
-        // then, simply multiply midpoint by the count of values at the interval (intervalTotal)
-        // and add to running total (total)
-        for (int i = 0, size = upperBounds.length; i < size; i++)
-        {
-            if (0L != counts.get(i))
-            {
-                long upperBound = Math.min(upperBounds[i], maxValue.get());
-                long midPoint = lowerBound + ((upperBound - lowerBound) / 2L);
-
-                BigDecimal intervalTotal = new BigDecimal(midPoint).multiply(new BigDecimal(counts.get(i)));
-                total = total.add(intervalTotal);
-            }
-
-            // and recalculate the lower bound for the next time around the loop
-            lowerBound = Math.max(upperBounds[i] + 1L, minValue.get());
-        }
-
-        return total.divide(new BigDecimal(getCount()), 2, RoundingMode.HALF_UP);
-    }
-
-    /**
-     * Calculate the upper bound within which 99% of observations fall.
-     *
-     * @return the upper bound for 99% of observations.
-     */
-    public long getTwoNinesUpperBound()
-    {
-        return getUpperBoundForFactor(0.99d);
-    }
-
-    /**
-     * Calculate the upper bound within which 99.99% of observations fall.
-     *
-     * @return the upper bound for 99.99% of observations.
-     */
-    public long getFourNinesUpperBound()
-    {
-        return getUpperBoundForFactor(0.9999d);
+        return new BigDecimal(totalObservations.longValue()).divide(new BigDecimal(getCount()), 2, RoundingMode.HALF_UP);
     }
 
     /**
@@ -381,8 +311,6 @@ public final class ConcurrentHistogram
         sb.append("min=").append(getMin()).append(", ");
         sb.append("max=").append(getMax()).append(", ");
         sb.append("mean=").append(getMean()).append(", ");
-        sb.append("99%=").append(getTwoNinesUpperBound()).append(", ");
-        sb.append("99.99%=").append(getFourNinesUpperBound()).append(", ");
 
         sb.append('[');
         for (int i = 0, size = counts.length(); i < size; i++)
