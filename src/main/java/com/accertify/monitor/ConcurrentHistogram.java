@@ -45,11 +45,11 @@ public final class ConcurrentHistogram
     // minimum value so far observed
     private final AtomicLong minValue = new AtomicLong(Long.MAX_VALUE);
     // maximum value so far observed
-    private final AtomicLong maxValue = new AtomicLong(0L);
+    private final AtomicLong maxValue = new AtomicLong(Long.MIN_VALUE);
 
     // Used to efficiently and accurately track the mean
-    private final AtomicLong totalObservations = new AtomicLong(0);
-    private final AtomicLong totalCount = new AtomicLong(0);
+    private final AtomicLong sumObservations = new AtomicLong(0);
+    private final AtomicLong count = new AtomicLong(0);
 
     /**
      * Create a new Histogram with a provided list of interval bounds.
@@ -140,8 +140,8 @@ public final class ConcurrentHistogram
     private void trackRange(final long value)
     {
         {
-            totalCount.incrementAndGet();
-            totalObservations.addAndGet(value);
+            count.incrementAndGet();
+            sumObservations.addAndGet(value);
         }
         {
             long currentMinValue;
@@ -192,8 +192,8 @@ public final class ConcurrentHistogram
         }
 
         // refresh the minimum and maximum observation ranges
-        this.totalCount.set(histogram.totalCount.get());
-        this.totalObservations.set(histogram.totalObservations.get());
+        this.count.set(histogram.count.get());
+        this.sumObservations.set(histogram.sumObservations.get());
         this.minValue.set(histogram.minValue.get());
         this.maxValue.set(histogram.maxValue.get());
     }
@@ -205,8 +205,8 @@ public final class ConcurrentHistogram
     {
         maxValue.set(0L);
         minValue.set(Long.MAX_VALUE);
-        totalCount.set(0l);
-        totalObservations.set(0l);
+        count.set(0l);
+        sumObservations.set(0l);
 
         for (int i = 0, size = counts.length(); i < size; i++)
         {
@@ -221,7 +221,7 @@ public final class ConcurrentHistogram
      */
     public long getCount()
     {
-        return totalCount.longValue();
+        return count.longValue();
     }
 
     /**
@@ -262,7 +262,7 @@ public final class ConcurrentHistogram
             return BigDecimal.ZERO;
         }
 
-        return new BigDecimal(totalObservations.longValue()).divide(new BigDecimal(getCount()), 2, RoundingMode.HALF_UP);
+        return new BigDecimal(sumObservations.longValue()).divide(new BigDecimal(getCount()), 2, RoundingMode.HALF_UP);
     }
 
     /**
