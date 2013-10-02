@@ -1,3 +1,4 @@
 out
 .idea/
-mrose-beta.iml
+*.iml
+.gradle
