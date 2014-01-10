@@ -48,6 +48,10 @@ dependencies {
     }
     //Groovy need by logback for configuration
     runtime 'org.codehaus.groovy:groovy-all:1.8.9@jar'
+
+    // Tomcat 8 for embedded container
+    compile 'org.apache.tomcat.embed:tomcat-embed-core:8.0.0-RC5'
+    compile 'org.apache.tomcat.embed:tomcat-embed-logging-juli:8.0.0-RC5'
 }
 
 //basename for generated jar and war
