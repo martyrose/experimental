@@ -9,8 +9,6 @@ import com.accertify.genetic.model.RulesTripped;
 import com.accertify.util.Log;
 import com.accertify.util.LogFactory;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import org.apache.commons.collections.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;

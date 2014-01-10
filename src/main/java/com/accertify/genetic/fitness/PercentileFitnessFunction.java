@@ -8,8 +8,6 @@ import com.accertify.genetic.model.OrderRow;
 import com.accertify.genetic.model.OrdersCollection;
 import com.accertify.util.Log;
 import com.accertify.util.LogFactory;
-import com.accertify.util.SimpleHashSet;
-import org.apache.commons.collections.map.LRUMap;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.jgap.CachedFitnessFunction;
 import org.jgap.IChromosome;
@@ -37,7 +35,8 @@ public class PercentileFitnessFunction extends CachedFitnessFunction {
     // This is used via the critical path
     @SuppressWarnings("unchecked")
     public PercentileFitnessFunction(OrdersCollection oc, Set<Integer> percentiles, int populationSize) {
-        super((java.util.Map<java.lang.String,java.lang.Double>)Collections.synchronizedMap(new LRUMap(populationSize*4)));
+        // TODO Needs to be an LRUMap
+        super(Collections.synchronizedMap(new HashMap<String, Double>()));
         this.orders = oc;
         this.percentiles = percentiles;
     }

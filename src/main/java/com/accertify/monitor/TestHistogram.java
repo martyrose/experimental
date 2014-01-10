@@ -2,26 +2,14 @@ package com.accertify.monitor;
 
 import com.accertify.util.Log;
 import com.accertify.util.LogFactory;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.commons.math3.random.RandomDataGenerator;
 import org.junit.Assert;
 import org.junit.Test;
-
-import javax.net.SocketFactory;
-import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
-import java.math.BigDecimal;
-import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
-import java.net.Socket;
 import java.net.URL;
-import java.text.MessageFormat;
-import java.text.NumberFormat;
 import java.util.TreeSet;
 
 /**
