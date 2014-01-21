@@ -14,7 +14,7 @@ public class DeleteHierarchyNode {
     private static final String JDBC_PASS = "core";
 //    private static final String JDBC_URL = "jdbc:oracle:thin:@corep.db.vip:44221/corep";
 //    private static final String JDBC_USER = "core";
-//    private static final String JDBC_PASS = "amJABlPfEP";
+//    private static final String JDBC_PASS = "XXXXXX";
 
     private static Connection c;
 
