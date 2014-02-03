@@ -10,11 +10,8 @@ import java.sql.SQLException;
 import java.util.Locale;
 
 /**
- * User: mrose
- * Date: 1/16/14
- * Time: 2:21 PM
- * <p/>
- * Comments
+ insert into events(key, value, ts) values('SALLY_CALI_GIRLS', null, to_date('2014.02.07', 'YYYY.MM.DD'))
+ insert into events(key, value, ts) values('MARTY_VEGAS_ACC', null, to_date('2014.03.14', 'YYYY.MM.DD'))
  */
 public class LoadCategoryData {
     private static final Logger log = LoggerFactory.getLogger(LoadCategoryData.class);
@@ -69,6 +66,9 @@ public class LoadCategoryData {
             "MISC",
             "NET",
             "NVI",
-            "CHARITY"
+            "CHARITY",
+            "MARTYSP",
+            "SALLYSP",
+            "ACC"
     };
 }

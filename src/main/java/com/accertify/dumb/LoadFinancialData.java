@@ -71,13 +71,31 @@ import java.util.UUID;
  // Find and evaluate duplicates
 
  select * from journals where hash in (
-   select hash from journals
-   group by hash
-   having count(1) > 1
- )
+     select hash from journals
+     group by hash
+     having count(1) > 1
+ ) order by hash
 
- // Find what accts this came from
- select distinct acct from journals
+ // categorize
+ select * from journals where category is null order by ts, desc1
+
+
+ -- categories not used
+ select key from categories
+ except
+ select category from journals
+
+ -- categories not defined
+ select category from journals
+ except
+ select key from categories
+
+ -- review categorization
+ select *
+ from journals
+ order by category, ts
+
+ to_date('2014.02.07', 'YYYY.MM.DD')
  */
 public class LoadFinancialData {
     private static final Logger log = LoggerFactory.getLogger(LoadFinancialData.class);
@@ -161,7 +179,7 @@ public class LoadFinancialData {
 
         ps.addBatch();
     }
-  // id, ts, desc1, desc2, amount, acct
+
     static class Row {
         String id;
         DateTime ts;
