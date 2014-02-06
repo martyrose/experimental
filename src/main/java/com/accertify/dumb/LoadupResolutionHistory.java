@@ -10,7 +10,6 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.*;
 
 /**
  * User: mrose
@@ -22,7 +21,7 @@ import java.util.*;
 public class LoadupResolutionHistory {
     private static final Logger log = LoggerFactory.getLogger(LoadupResolutionHistory.class);
 
-    private static final String JDBC_URL = "jdbc:oracle:thin:@10.216.30.65:1521:XE";
+    private static final String JDBC_URL = "jdbc:oracle:thin:@10.12.17.123:1521:XE";
     private static final String JDBC_USER = "core";
     private static final String JDBC_PASS = "core";
 
@@ -36,7 +35,7 @@ public class LoadupResolutionHistory {
             MersenneTwisterFast twister = new MersenneTwisterFast(System.currentTimeMillis() ^ System.identityHashCode(c));
 
             PreparedStatement ps = c.prepareStatement("insert into resolution_history(id, sys_id, virtual_table_id, data_header_id, established, established_by) values(?,?,?,?,?,?)");
-            for( int i=0; i<300; i++ ) {
+            for( int i=0; i<500; i++ ) {
                 ps.clearBatch();
                 ps.clearParameters();
                 for(int j=0; j<1000; j++ ) {

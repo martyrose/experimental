@@ -9,14 +9,13 @@ import java.util.*;
  *
  */
 public class DeleteHierarchyNode {
-    private static final String JDBC_URL = "jdbc:oracle:thin:@10.12.17.123:1521:XE";
+    private static final String PRIMARY_JDBC_URL = "jdbc:oracle:thin:@10.12.17.123:1521:XE";
+    private static final String SECONDARY_JDBC_URL = "jdbc:oracle:thin:@10.12.17.123:1521:XE";
     private static final String JDBC_USER = "core";
-    private static final String JDBC_PASS = "core";
-//    private static final String JDBC_URL = "jdbc:oracle:thin:@corep.db.vip:44221/corep";
-//    private static final String JDBC_USER = "core";
-//    private static final String JDBC_PASS = "XXXXXX";
+    private static String JDBC_PASS = null;
 
-    private static Connection c;
+    private static Connection primaryConnection;
+    private static Connection secondaryConnection;
 
     private static final String FIND_CONSTRAINTS =
             "SELECT UC.TABLE_NAME, UCC.COLUMN_NAME, UC.CONSTRAINT_NAME \n" +
@@ -28,16 +27,29 @@ public class DeleteHierarchyNode {
     private static final NumberFormat nf = NumberFormat.getIntegerInstance();
 
     public static void main(String[] args) {
-        try {
-            c = DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASS);
-            c.setAutoCommit(false);
+        String JDBC_PASS = System.getenv("JDBC_PASSWORD");
+        JDBC_PASS="core";
 
-            Set<Constraint> constraints = constraints(c);
+        if( JDBC_PASS == null || "".equals(JDBC_PASS) ) {
+            System.out.println("You must define the password as a system property.");
+            System.out.println("export JDBC_PASSWORD=asdfasdfasdf");
+            System.exit(-1);
+        }
+        System.out.println("Connecting Primary To: " + PRIMARY_JDBC_URL);
+        System.out.println("Connecting With User: " + JDBC_USER);
+
+        try {
+            primaryConnection = DriverManager.getConnection(PRIMARY_JDBC_URL, JDBC_USER, JDBC_PASS);
+            primaryConnection.setAutoCommit(false);
+
+            secondaryConnection = DriverManager.getConnection(SECONDARY_JDBC_URL, JDBC_USER, JDBC_PASS);
+            secondaryConnection.setAutoCommit(false);
+
+            Set<Constraint> constraints = constraints(primaryConnection);
             log("Constraints: " + constraints.size());
 
-            Set<Table> tables = tables(constraints, c);
+            Set<Table> tables = tables(constraints, primaryConnection);
             log("Tables: " + tables.size());
-
 
             Map<String, Table> tablesMap = new HashMap<>();
             for(Table t: tables) {
@@ -65,10 +77,16 @@ public class DeleteHierarchyNode {
         }
     }
 
-    private static Connection getConnection() throws SQLException {
-        c = DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASS);
-        c.setAutoCommit(false);
-        return c;
+    private static Connection getPrimaryConnection() throws SQLException {
+        primaryConnection = DriverManager.getConnection(PRIMARY_JDBC_URL, JDBC_USER, JDBC_PASS);
+        primaryConnection.setAutoCommit(false);
+        return primaryConnection;
+    }
+
+    private static Connection getSecondaryConnection() throws SQLException {
+        secondaryConnection = DriverManager.getConnection(PRIMARY_JDBC_URL, JDBC_USER, JDBC_PASS);
+        secondaryConnection.setAutoCommit(false);
+        return secondaryConnection;
     }
 
     private static Set<Constraint> constraints(Connection c) throws SQLException {
@@ -106,7 +124,7 @@ public class DeleteHierarchyNode {
     }
 
     private static void doFastCheck(Constraint csr) throws SQLException {
-        try(Connection c = getConnection()) {
+        try(Connection c = getPrimaryConnection()) {
             try(Statement st = c.createStatement()) {
                 log("Checking: " + csr.constraint);
                 st.setQueryTimeout(5);
@@ -184,6 +202,7 @@ public class DeleteHierarchyNode {
         final String table;
         final String column;
         Boolean fastCheckPassed;
+        Boolean hasReferences;
 
         Constraint(String constraint, String table, String column) {
             this.constraint = constraint;
