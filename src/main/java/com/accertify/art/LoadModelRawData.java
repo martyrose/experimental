@@ -36,20 +36,22 @@ import java.sql.*;
 /**
  * Table we will use to store this
  * <p/>
- * create table art_model (
- * tid text,
- * import timestamp(1),
- * escore int,
- * mscore int,
- * agent text,
- * resolution text,
- * fraud boolean
- * )
+ create table art_model (
+ tid text,
+ import timestamp(1),
+ escore int,
+ mscore int,
+ agent text,
+ resolution text,
+ fraud boolean,
+ tripped1 text,
+ tripped2 text
+ );
  */
 public class LoadModelRawData {
     private static final Logger log = LoggerFactory.getLogger(LoadModelRawData.class);
 
-    private static final String INSERT_SQL = "insert into art_model(tid, import, escore, mscore, agent, resolution, fraud) values(?,?,?,?,?,?,?)";
+    private static final String INSERT_SQL = "insert into art_model(tid, import, escore, mscore, agent, resolution, fraud, tripped1, tripped2) values(?,?,?,?,?,?,?,?,?)";
 
 
     public static void main(String[] args) {
@@ -59,14 +61,14 @@ public class LoadModelRawData {
         try (Connection conn = getConnection()) {
             PreparedStatement ps = conn.prepareStatement(INSERT_SQL);
 
-            FileInputStream fis = new FileInputStream(new File("/tmp/art.data.dat"));
+            FileInputStream fis = new FileInputStream(new File("/home/mrose/art.data.dat"));
             BufferedReader bufReader = new BufferedReader(new InputStreamReader(fis, Charset.defaultCharset()));
 
             String line;
             while ((line = bufReader.readLine()) != null) {
                 String[] parts = StringUtils.splitPreserveAllTokens(line, (char) 27);
 
-                if (parts.length != 7) {
+                if (parts.length != 9) {
                     log.warn("Invalid line: " + line);
                     continue;
                 }
@@ -82,6 +84,8 @@ public class LoadModelRawData {
                 } else {
                     ps.setBoolean(7, "1".equals(parts[6]));
                 }
+                ps.setString(8, StringUtils.isBlank(parts[7]) ? null : parts[7]);
+                ps.setString(9, StringUtils.isBlank(parts[8]) ? null : parts[8]);
                 ps.executeUpdate();
             }
             conn.commit();
