@@ -34,25 +34,24 @@ import java.nio.charset.Charset;
 import java.sql.*;
 
 /**
- * Table we will use to store this
- * <p/>
+ Table we will use to store this
+
  create table art_model (
- tid text,
- import timestamp(1),
- escore int,
- mscore int,
- agent text,
- resolution text,
- fraud boolean,
- tripped1 text,
- tripped2 text
+   tid text,
+   import timestamp(1),
+   escore int,
+   mscore int,
+   agent text,
+   resolution text,
+   fraud boolean,
+   tripped1 text,
+   tripped2 text
  );
  */
 public class LoadModelRawData {
     private static final Logger log = LoggerFactory.getLogger(LoadModelRawData.class);
 
     private static final String INSERT_SQL = "insert into art_model(tid, import, escore, mscore, agent, resolution, fraud, tripped1, tripped2) values(?,?,?,?,?,?,?,?,?)";
-
 
     public static void main(String[] args) {
         // 2014-02-22 16:25:46.588807
