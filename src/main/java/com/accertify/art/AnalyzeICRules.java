@@ -2,8 +2,9 @@ package com.accertify.art;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableInt;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.mutable.MutableLong;
+import org.apache.commons.lang3.tuple.ImmutableTriple;
+import org.apache.commons.lang3.tuple.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.sql.*;
@@ -15,23 +16,30 @@ import java.util.*;
 public class AnalyzeICRules {
     private static final Logger log = LoggerFactory.getLogger(LoadRuleData.class);
 
+//    private static final String SQL = "select tripped2 from art_model where fraud = true";  // and import < to_date('2014-01-01', 'YYYY-MM-DD')
+    private static final String SQL = "select tripped2 from art_model where fraud = false";  // and import < to_date('2014-01-01', 'YYYY-MM-DD')
+
     public static void main(String[] args) {
         try (Connection conn = getConnection()) {
             Map<Long, String> ruleData = getRuleData(conn);
-            final Map<Long, Pair<MutableInt, MutableInt>> tripData = getICTrippedOnFraud(conn);
+            // left => count
+            // middle => score
+            // right => lift
+            final Map<Long, Triple<MutableInt, MutableInt, MutableLong>> tripData = getICTrippedOnFraud(conn);
 
             List<Long> rulez = new ArrayList<>(tripData.keySet());
             Collections.sort(rulez, new Comparator<Long>() {
                 @Override
                 public int compare(Long o1, Long o2) {
-                    return tripData.get(o1).getRight().toInteger().compareTo(tripData.get(o2).getRight().toInteger());
+                    return tripData.get(o1).getRight().toLong().compareTo(tripData.get(o2).getRight().toLong());
                 }
             });
 
             for(Long rid: rulez) {
                 log.info("Rule=" + rid +
-                        " score=" + tripData.get(rid).getRight().toInteger() +
                         " count=" + tripData.get(rid).getLeft().toInteger() +
+                        " score=" + tripData.get(rid).getMiddle().toInteger() +
+                        " liftOrDrag=" + tripData.get(rid).getRight().toLong() +
                         " name=" + ruleData.get(rid));
             }
         } catch (Throwable ex) {
@@ -55,11 +63,11 @@ public class AnalyzeICRules {
         return results;
     }
 
-    private static Map<Long, Pair<MutableInt, MutableInt>> getICTrippedOnFraud(Connection conn) throws SQLException {
-        Map<Long, Pair<MutableInt, MutableInt>> results = new HashMap<>();
+    private static Map<Long, Triple<MutableInt, MutableInt, MutableLong>> getICTrippedOnFraud(Connection conn) throws SQLException {
+        Map<Long, Triple<MutableInt, MutableInt, MutableLong>> results = new HashMap<>();
         try(Statement st = conn.createStatement()) {
             st.setFetchSize(100);
-            try(ResultSet rs = st.executeQuery("select tripped2 from art_model where fraud = true")) {
+            try(ResultSet rs = st.executeQuery(SQL)) {
                 while(rs.next()) {
                     String n = rs.getString(1);
                     String[] pairs = StringUtils.split(n, ';');
@@ -68,11 +76,12 @@ public class AnalyzeICRules {
                         Long id = Long.parseLong(sequence[0]);
                         Integer score = Integer.parseInt(sequence[1]);
                         if(!results.containsKey(id)) {
-                            Pair<MutableInt, MutableInt> p = new ImmutablePair<>(new MutableInt(0), new MutableInt(0));
+                            Triple<MutableInt, MutableInt, MutableLong> p = new ImmutableTriple<>(new MutableInt(0), new MutableInt(0), new MutableLong(0));
                             results.put(id, p);
                         }
                         results.get(id).getLeft().increment();
-                        results.get(id).getRight().setValue(score);
+                        results.get(id).getMiddle().setValue(score);
+                        results.get(id).getRight().add(score);
                     }
                 }
             }

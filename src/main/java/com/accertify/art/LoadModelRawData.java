@@ -2,22 +2,20 @@ package com.accertify.art;
 
 /**
  * QUERY USED TO GENERATE
- *
- select transaction_id, import_ts, scoring7_score as existing_score, numeric_0002 as model_score, (select username from users where id=LAST_VIEWER_ID) as u, (select resolution_name from resolutions where id = RESOLUTION1_ID) as r, resolution1_fraud
+
+ select transaction_id, import_ts, scoring7_score as existing_score, numeric_0002 as model_score, (select username from users where id=LAST_VIEWER_ID) as u, (select resolution_name from resolutions where id = RESOLUTION1_ID) as r, resolution1_fraud, text_0439, scoring7_rules_tripped
  from data_headers1 dh
  where virtual_table_id = 5237260000000001641 and
- import_ts between to_date('2014-02-22', 'YYYY-MM-DD') and to_date('2014-02-24', 'YYYY-MM-DD')
- and numeric_0002 is not null
- and trim(text_0439) is not null
+ import_ts between to_date('2014-02-22', 'YYYY-MM-DD') and to_date('2014-03-01', 'YYYY-MM-DD') and
+ transaction_id like '14%'
 
  union all
 
- select transaction_id, import_ts, scoring7_score as existing_score, numeric_0002 as model_score, (select username from users where id=LAST_VIEWER_ID) as u, (select resolution_name from resolutions where id = RESOLUTION1_ID) as r, resolution1_fraud
+ select  transaction_id, import_ts, scoring7_score as existing_score, numeric_0002 as model_score, (select username from users where id=LAST_VIEWER_ID) as u, (select resolution_name from resolutions where id = RESOLUTION1_ID) as r, resolution1_fraud, text_0439, scoring7_rules_tripped
  from data_headers1_hist dh
  where virtual_table_id = 5237260000000001641 and
- import_ts between to_date('2014-02-22', 'YYYY-MM-DD') and to_date('2014-02-24', 'YYYY-MM-DD')
- and numeric_0002 is not null
- and trim(text_0439) is not null
+ import_ts between to_date('2014-02-22', 'YYYY-MM-DD') and to_date('2014-03-01', 'YYYY-MM-DD') and
+ transaction_id like '14%'
  */
 
 import org.apache.commons.lang3.StringUtils;
@@ -60,7 +58,7 @@ public class LoadModelRawData {
         try (Connection conn = getConnection()) {
             PreparedStatement ps = conn.prepareStatement(INSERT_SQL);
 
-            FileInputStream fis = new FileInputStream(new File("/home/mrose/art.data.dat"));
+            FileInputStream fis = new FileInputStream(new File("/home/mrose/art/adorama.09.2013.dat"));
             BufferedReader bufReader = new BufferedReader(new InputStreamReader(fis, Charset.defaultCharset()));
 
             String line;
@@ -75,7 +73,11 @@ public class LoadModelRawData {
                 ps.setString(1, parts[0]);
                 ps.setTimestamp(2, new Timestamp(fmt.parseMillis(parts[1])));
                 ps.setInt(3, (int) Double.parseDouble(parts[2]));
-                ps.setInt(4, (int) Double.parseDouble(parts[3]));
+                if (StringUtils.isBlank(parts[3])) {
+                    ps.setNull(4, Types.INTEGER);
+                } else {
+                    ps.setInt(4, (int) Double.parseDouble(parts[3]));
+                }
                 ps.setString(5, StringUtils.isBlank(parts[4]) ? null : parts[4]);
                 ps.setString(6, StringUtils.isBlank(parts[5]) ? null : parts[5]);
                 if (StringUtils.isBlank(parts[6])) {
