@@ -12,6 +12,9 @@ import java.util.Locale;
 /**
  insert into events(key, value, ts) values('SALLY_CALI_GIRLS', null, to_date('2014.02.07', 'YYYY.MM.DD'))
  insert into events(key, value, ts) values('MARTY_VEGAS_ACC', null, to_date('2014.03.14', 'YYYY.MM.DD'))
+ insert into events(key, value, ts) values('SPRING_WATER_2014', null, to_date('2014.03.21', 'YYYY.MM.DD'))
+
+ insert into categories(key, value, budget) values('Cash', null, null)
  */
 public class LoadCategoryData {
     private static final Logger log = LoggerFactory.getLogger(LoadCategoryData.class);

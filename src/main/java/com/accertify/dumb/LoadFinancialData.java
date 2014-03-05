@@ -47,7 +47,7 @@ import java.util.UUID;
  event text,
  desc1 text,
  desc2 text,
- amount numeric(7,2),
+ amount numeric(12,2),
  acct text,
  hash text,
  id text primary key
@@ -56,7 +56,7 @@ import java.util.UUID;
  create table categories (
  key text primary key,
  value text,
- budget numeric(7,2)
+ budget numeric(12,2)
  );
 
  create table events (
@@ -71,42 +71,74 @@ import java.util.UUID;
  // Find and evaluate duplicates
 
  select * from journals where hash in (
-     select hash from journals
-     group by hash
-     having count(1) > 1
+ select hash from journals where ts >= to_date('2014.02.01', 'YYYY.MM.DD')
+ group by hash
+ having count(1) > 1
  ) order by hash
 
  // categorize
- select * from journals where category is null order by ts, desc1
-
+ select ts, category, event, amount, acct, desc1, desc2, id
+ from journals
+ where category is null
+ order by ts, desc1
 
  -- categories not used
  select key from categories
  except
- select category from journals
+ select category from journals where ts >= to_date('2014.02.01', 'YYYY.MM.DD')
 
  -- categories not defined
- select category from journals
+ select category from journals where ts >= to_date('2014.02.01', 'YYYY.MM.DD')
  except
  select key from categories
 
- -- review categorization
- select *
- from journals
+ -- event definitions
+ select ts, category, event, amount, acct, desc1, desc2, id
+ from journals where ts >= to_date('2014.02.01', 'YYYY.MM.DD')
  order by category, ts
 
- to_date('2014.02.07', 'YYYY.MM.DD')
+ -- review categorization
+ select *
+ from journals where ts >= to_date('2014.02.01', 'YYYY.MM.DD')
+ order by category, ts
+
+ -- Review Category summary
+ select category, count(1), sum(amount)
+ from journals
+ where ts between to_date('2014.02.01', 'YYYY.MM.DD') and to_date('2014.03.01', 'YYYY.MM.DD')
+ group by category
+ order by sum(amount) desc
+
+ -- Review event summary
+ select event, count(1), sum(amount)
+ from journals
+ where ts between to_date('2014.02.01', 'YYYY.MM.DD') and to_date('2014.03.01', 'YYYY.MM.DD') and
+ event is not null
+ group by event
+ order by sum(amount) desc
+
+ -- Grand Total
+ select sum(amount)
+ from journals
+ where ts between to_date('2014.02.01', 'YYYY.MM.DD') and to_date('2014.03.01', 'YYYY.MM.DD')
+
+ -- To Print
+ select ts, category, amount, acct, desc1
+ from journals
+ where ts between to_date('2014.02.01', 'YYYY.MM.DD') and to_date('2014.03.01', 'YYYY.MM.DD') and
+ abs(amount) > 50
+ order by abs(amount) desc
  */
 public class LoadFinancialData {
     private static final Logger log = LoggerFactory.getLogger(LoadFinancialData.class);
 
-    private static final String JDBC_URL = "jdbc:postgresql://10.216.30.64:5432/mrose";
+    private static final String JDBC_URL = "jdbc:postgresql://10.216.30.44:5432/mrose";
     private static final String JDBC_USER = "mrose";
     private static final String JDBC_PASS = "mrose";
 
-    private static final String FILE_PATH = "/home/mrose/Documents/finance/data.csv";
+    private static final String FILE_PATH = "/home/mrose/Documents/finance/data2.csv";
     private static final int YEAR = 2014;
-    private static final int MONTH = DateTimeConstants.JANUARY;
+    private static final int MONTH = DateTimeConstants.FEBRUARY;
 
     private static Connection c;
     private static PreparedStatement ps;
@@ -153,6 +185,11 @@ public class LoadFinancialData {
             }
             ps.executeBatch();
             c.commit();
+        } catch(SQLException e) {
+            if (e.getNextException() != null) {
+                log.warn(e.getNextException().getMessage(), e);
+            }
+            log.warn(e.getMessage(), e);
         } catch (Throwable e) {
             log.warn(e.getMessage(), e);
         } finally {

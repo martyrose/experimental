@@ -58,7 +58,7 @@ public class LoadModelRawData {
         try (Connection conn = getConnection()) {
             PreparedStatement ps = conn.prepareStatement(INSERT_SQL);
 
-            FileInputStream fis = new FileInputStream(new File("/home/mrose/art/adorama.09.2013.dat"));
+            FileInputStream fis = new FileInputStream(new File("/home/mrose/art/art.adorama.dat"));
             BufferedReader bufReader = new BufferedReader(new InputStreamReader(fis, Charset.defaultCharset()));
 
             String line;
