@@ -40,8 +40,11 @@ import java.sql.*;
    escore int,
    mscore int,
    agent text,
-   resolution text,
-   fraud boolean,
+   agent_ts timestamp(1),
+   r text,
+   r_ts timestamp(1),
+   r_fraud boolean,
+   r_missed boolean,
    tripped1 text,
    tripped2 text
  );
@@ -49,7 +52,7 @@ import java.sql.*;
 public class LoadModelRawData {
     private static final Logger log = LoggerFactory.getLogger(LoadModelRawData.class);
 
-    private static final String INSERT_SQL = "insert into art_model(tid, import, escore, mscore, agent, resolution, fraud, tripped1, tripped2) values(?,?,?,?,?,?,?,?,?)";
+    private static final String INSERT_SQL = "insert into art_model(tid, import, escore, mscore, agent, agent_ts, r, r_ts, r_fraud, r_missed, tripped1, tripped2) values(?,?,?,?,?,?,?,?,?,?,?,?)";
 
     public static void main(String[] args) {
         // 2014-02-22 16:25:46.588807
@@ -58,35 +61,56 @@ public class LoadModelRawData {
         try (Connection conn = getConnection()) {
             PreparedStatement ps = conn.prepareStatement(INSERT_SQL);
 
-            FileInputStream fis = new FileInputStream(new File("/home/mrose/art/art.adorama.dat"));
+            FileInputStream fis = new FileInputStream(new File("/home/mrose/art/art.data.dat"));
             BufferedReader bufReader = new BufferedReader(new InputStreamReader(fis, Charset.defaultCharset()));
 
             String line;
             while ((line = bufReader.readLine()) != null) {
                 String[] parts = StringUtils.splitPreserveAllTokens(line, (char) 27);
 
-                if (parts.length != 9) {
+                if (parts.length != 12) {
                     log.warn("Invalid line: " + line);
                     continue;
                 }
+                // Should push this into the select so it gets formatted correctly
+                if( StringUtils.isNotBlank(parts[1]) && !StringUtils.contains(parts[1], '.')) {
+                    parts[1] = parts[1] + ".000000";
+                }
+                // Should push this into the select so it gets formatted correctly
+                if( StringUtils.isNotBlank(parts[7]) && !StringUtils.contains(parts[7], '.')) {
+                    parts[7] = parts[7] + ".000000";
+                }
+                // Should push this into the select so it gets formatted correctly
+                if( StringUtils.isNotBlank(parts[5]) && !StringUtils.contains(parts[5], '.')) {
+                    parts[5] = parts[5] + ".000000";
+                }
 
-                ps.setString(1, parts[0]);
-                ps.setTimestamp(2, new Timestamp(fmt.parseMillis(parts[1])));
-                ps.setInt(3, (int) Double.parseDouble(parts[2]));
-                if (StringUtils.isBlank(parts[3])) {
+                ps.setString(1, parts[0]); // tid
+                ps.setTimestamp(2, new Timestamp(fmt.parseMillis(parts[1]))); // import
+                ps.setInt(3, (int) Double.parseDouble(parts[2])); // escore
+                if (StringUtils.isBlank(parts[3])) { // mscore
                     ps.setNull(4, Types.INTEGER);
                 } else {
                     ps.setInt(4, (int) Double.parseDouble(parts[3]));
                 }
-                ps.setString(5, StringUtils.isBlank(parts[4]) ? null : parts[4]);
-                ps.setString(6, StringUtils.isBlank(parts[5]) ? null : parts[5]);
-                if (StringUtils.isBlank(parts[6])) {
-                    ps.setNull(7, Types.BOOLEAN);
+                ps.setString(5, StringUtils.isBlank(parts[4]) ? null : parts[4]); // agent
+
+                ps.setTimestamp(6, StringUtils.isBlank(parts[5]) ? null : new Timestamp(fmt.parseMillis(parts[5]))); // agent_ts
+                ps.setString(7, StringUtils.isBlank(parts[6]) ? null : parts[6]); // resolution
+                ps.setTimestamp(8, StringUtils.isBlank(parts[7]) ? null : new Timestamp(fmt.parseMillis(parts[7]))); // resolution_ts
+                if (StringUtils.isBlank(parts[8])) { // r_fraud
+                    ps.setNull(9, Types.BOOLEAN);
                 } else {
-                    ps.setBoolean(7, "1".equals(parts[6]));
+                    ps.setBoolean(9, "1".equals(parts[8]));
                 }
-                ps.setString(8, StringUtils.isBlank(parts[7]) ? null : parts[7]);
-                ps.setString(9, StringUtils.isBlank(parts[8]) ? null : parts[8]);
+                if (StringUtils.isBlank(parts[9])) { // r_missed
+                    ps.setNull(10, Types.BOOLEAN);
+                } else {
+                    ps.setBoolean(10, "1".equals(parts[9]));
+                }
+
+                ps.setString(11, StringUtils.isBlank(parts[10]) ? null : parts[10]); // tripped1
+                ps.setString(12, StringUtils.isBlank(parts[11]) ? null : parts[11]); // tripped2
                 ps.executeUpdate();
             }
             conn.commit();

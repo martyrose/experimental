@@ -16,8 +16,8 @@ import java.util.*;
 public class AnalyzeICRules {
     private static final Logger log = LoggerFactory.getLogger(LoadRuleData.class);
 
-//    private static final String SQL = "select tripped2 from art_model where fraud = true";  // and import < to_date('2014-01-01', 'YYYY-MM-DD')
-    private static final String SQL = "select tripped2 from art_model where fraud = false";  // and import < to_date('2014-01-01', 'YYYY-MM-DD')
+    private static final String SQL = "select tripped2 from art_model where r_fraud = true";  // and import < to_date('2014-01-01', 'YYYY-MM-DD')
+//    private static final String SQL = "select tripped2 from art_model where r_fraud = false";  // and import < to_date('2014-01-01', 'YYYY-MM-DD')
 
     public static void main(String[] args) {
         try (Connection conn = getConnection()) {
