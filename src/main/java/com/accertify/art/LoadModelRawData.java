@@ -64,6 +64,7 @@ public class LoadModelRawData {
             FileInputStream fis = new FileInputStream(new File("/home/mrose/art/art.data.dat"));
             BufferedReader bufReader = new BufferedReader(new InputStreamReader(fis, Charset.defaultCharset()));
 
+            int counter=0;
             String line;
             while ((line = bufReader.readLine()) != null) {
                 String[] parts = StringUtils.splitPreserveAllTokens(line, (char) 27);
@@ -71,18 +72,6 @@ public class LoadModelRawData {
                 if (parts.length != 12) {
                     log.warn("Invalid line: " + line);
                     continue;
-                }
-                // Should push this into the select so it gets formatted correctly
-                if( StringUtils.isNotBlank(parts[1]) && !StringUtils.contains(parts[1], '.')) {
-                    parts[1] = parts[1] + ".000000";
-                }
-                // Should push this into the select so it gets formatted correctly
-                if( StringUtils.isNotBlank(parts[7]) && !StringUtils.contains(parts[7], '.')) {
-                    parts[7] = parts[7] + ".000000";
-                }
-                // Should push this into the select so it gets formatted correctly
-                if( StringUtils.isNotBlank(parts[5]) && !StringUtils.contains(parts[5], '.')) {
-                    parts[5] = parts[5] + ".000000";
                 }
 
                 ps.setString(1, parts[0]); // tid
@@ -98,21 +87,19 @@ public class LoadModelRawData {
                 ps.setTimestamp(6, StringUtils.isBlank(parts[5]) ? null : new Timestamp(fmt.parseMillis(parts[5]))); // agent_ts
                 ps.setString(7, StringUtils.isBlank(parts[6]) ? null : parts[6]); // resolution
                 ps.setTimestamp(8, StringUtils.isBlank(parts[7]) ? null : new Timestamp(fmt.parseMillis(parts[7]))); // resolution_ts
-                if (StringUtils.isBlank(parts[8])) { // r_fraud
-                    ps.setNull(9, Types.BOOLEAN);
-                } else {
-                    ps.setBoolean(9, "1".equals(parts[8]));
-                }
-                if (StringUtils.isBlank(parts[9])) { // r_missed
-                    ps.setNull(10, Types.BOOLEAN);
-                } else {
-                    ps.setBoolean(10, "1".equals(parts[9]));
-                }
+
+                ps.setBoolean(9, "1".equals(parts[8]));// r_fraud
+                ps.setBoolean(10, "1".equals(parts[9]));// r_missed
 
                 ps.setString(11, StringUtils.isBlank(parts[10]) ? null : parts[10]); // tripped1
                 ps.setString(12, StringUtils.isBlank(parts[11]) ? null : parts[11]); // tripped2
-                ps.executeUpdate();
+                ps.addBatch(); counter++;
+
+                if( counter % 1000 == 0 ) {
+                    ps.executeBatch();
+                }
             }
+            ps.executeBatch();
             conn.commit();
         } catch (Throwable ex) {
             log.error(ex.getMessage(), ex);
