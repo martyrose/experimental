@@ -75,7 +75,8 @@ import java.sql.*;
    r_fraud boolean,
    r_missed boolean,
    tripped1 text,
-   tripped2 text
+   tripped2 text,
+   tripped3 text
  );
  */
 public class LoadModelRawData {
