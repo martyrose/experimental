@@ -76,7 +76,29 @@ import java.util.UUID;
  having count(1) > 1
  ) order by hash
 
+ // Look for paying CC bills
+ select ts, category, event, amount, acct, desc1, desc2, id
+ from journals
+ where category is null
+ order by abs(amount) desc
+
+ // auto categorize
+ update journals set category='CHILDCARE'
+ where category is null and lower(desc1) like '%childcare%' and lower(desc1) like 'atm with%'
+
+ update journals set category='BIGBOX'
+ where category is null and lower(desc1) like '%central checkout%'
+
+ update journals set category='BIGBOX'
+ where category is null and lower(desc1) like '%amazon%'
+
+
  // categorize
+ select ts, category, event, amount, acct, desc1, desc2, id
+ from journals
+ where category is null
+ order by lower(desc1), ts
+
  select ts, category, event, amount, acct, desc1, desc2, id
  from journals
  where category is null
@@ -132,13 +154,13 @@ import java.util.UUID;
 public class LoadFinancialData {
     private static final Logger log = LoggerFactory.getLogger(LoadFinancialData.class);
 
-    private static final String JDBC_URL = "jdbc:postgresql://10.216.30.44:5432/mrose";
+    private static final String JDBC_URL = "jdbc:postgresql://10.216.30.65:5432/mrose";
     private static final String JDBC_USER = "mrose";
     private static final String JDBC_PASS = "mrose";
 
-    private static final String FILE_PATH = "/home/mrose/Documents/finance/data2.csv";
+    private static final String FILE_PATH = "/home/mrose/Documents/finance/mint.csv";
     private static final int YEAR = 2014;
-    private static final int MONTH = DateTimeConstants.FEBRUARY;
+    private static final int MONTH = DateTimeConstants.MARCH;
 
     private static Connection c;
     private static PreparedStatement ps;
@@ -147,6 +169,7 @@ public class LoadFinancialData {
     private static final DateTimeFormatter dtf = DateTimeFormat.forPattern("MM/dd/yyyy");
 
     public static void main(String[] args) {
+        int lineNumber = 1;
         try {
             c = DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASS);
             c.setAutoCommit(false);
@@ -155,7 +178,7 @@ public class LoadFinancialData {
             List<String> linez = Files.readAllLines(new File(FILE_PATH).toPath(), Charset.defaultCharset());
 
             for(String line: linez) {
-                String[] parts = StringUtils.split(line, '|');
+                String[] parts = StringUtils.splitPreserveAllTokens(line, '|');
                 if(StringUtils.equals(parts[0], "Date")) {
                     // HEADER ROW DISCARD
                     continue;
@@ -182,6 +205,7 @@ public class LoadFinancialData {
                     continue;
                 }
                 addRow(r);
+                lineNumber++;
             }
             ps.executeBatch();
             c.commit();
@@ -189,9 +213,9 @@ public class LoadFinancialData {
             if (e.getNextException() != null) {
                 log.warn(e.getNextException().getMessage(), e);
             }
-            log.warn(e.getMessage(), e);
+            log.warn("Line: " + lineNumber + " : " + e.getMessage(), e);
         } catch (Throwable e) {
-            log.warn(e.getMessage(), e);
+            log.warn("Line: " + lineNumber + " : " + e.getMessage(), e);
         } finally {
             ;
         }
