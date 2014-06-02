@@ -154,13 +154,13 @@ import java.util.UUID;
 public class LoadFinancialData {
     private static final Logger log = LoggerFactory.getLogger(LoadFinancialData.class);
 
-    private static final String JDBC_URL = "jdbc:postgresql://10.216.30.65:5432/mrose";
+    private static final String JDBC_URL = "jdbc:postgresql://192.168.56.101:5432/mrose";
     private static final String JDBC_USER = "mrose";
     private static final String JDBC_PASS = "mrose";
 
-    private static final String FILE_PATH = "/home/mrose/Documents/finance/mint.csv";
+    private static final String FILE_PATH = "/usr/local/google/home/martinrose/Documents/data3.csv";
     private static final int YEAR = 2014;
-    private static final int MONTH = DateTimeConstants.MARCH;
+    private static final int MONTH = DateTimeConstants.MAY;
 
     private static Connection c;
     private static PreparedStatement ps;
@@ -210,6 +210,11 @@ public class LoadFinancialData {
             ps.executeBatch();
             c.commit();
         } catch(SQLException e) {
+            try {
+                c.rollback();
+            } catch (SQLException e1) {
+                ;
+            }
             if (e.getNextException() != null) {
                 log.warn(e.getNextException().getMessage(), e);
             }
@@ -259,5 +264,4 @@ public class LoadFinancialData {
                     .toString();
         }
     }
-
 }
