@@ -79,7 +79,7 @@ import java.util.UUID;
  // Look for paying CC bills
  select ts, category, event, amount, acct, desc1, desc2, id
  from journals
- where category is null
+ where category is null and ts between to_date('2014.04.01', 'YYYY.MM.DD') and to_date('2014.05.01', 'YYYY.MM.DD')
  order by abs(amount) desc
 
  // auto categorize
@@ -107,34 +107,34 @@ import java.util.UUID;
  -- categories not used
  select key from categories
  except
- select category from journals where ts >= to_date('2014.02.01', 'YYYY.MM.DD')
+ select category from journals where ts >= to_date('2014.04.01', 'YYYY.MM.DD')
 
  -- categories not defined
- select category from journals where ts >= to_date('2014.02.01', 'YYYY.MM.DD')
+ select category from journals where ts >= to_date('2014.04.01', 'YYYY.MM.DD')
  except
  select key from categories
 
  -- event definitions
  select ts, category, event, amount, acct, desc1, desc2, id
- from journals where ts >= to_date('2014.02.01', 'YYYY.MM.DD')
+ from journals where ts >= to_date('2014.04.01', 'YYYY.MM.DD')
  order by category, ts
 
  -- review categorization
- select *
- from journals where ts >= to_date('2014.02.01', 'YYYY.MM.DD')
+ select ts, category, acct, amount, desc1, desc2, id
+ from journals where ts >= to_date('2014.04.01', 'YYYY.MM.DD')
  order by category, ts
 
  -- Review Category summary
  select category, count(1), sum(amount)
  from journals
- where ts between to_date('2014.02.01', 'YYYY.MM.DD') and to_date('2014.03.01', 'YYYY.MM.DD')
+ where ts between to_date('2014.04.01', 'YYYY.MM.DD') and to_date('2014.06.01', 'YYYY.MM.DD')
  group by category
  order by sum(amount) desc
 
  -- Review event summary
  select event, count(1), sum(amount)
  from journals
- where ts between to_date('2014.02.01', 'YYYY.MM.DD') and to_date('2014.03.01', 'YYYY.MM.DD') and
+ where ts between to_date('2014.01.01', 'YYYY.MM.DD') and to_date('2014.06.01', 'YYYY.MM.DD') and
  event is not null
  group by event
  order by sum(amount) desc
@@ -142,12 +142,12 @@ import java.util.UUID;
  -- Grand Total
  select sum(amount)
  from journals
- where ts between to_date('2014.02.01', 'YYYY.MM.DD') and to_date('2014.03.01', 'YYYY.MM.DD')
+ where ts between to_date('2014.04.01', 'YYYY.MM.DD') and to_date('2014.06.01', 'YYYY.MM.DD')
 
  -- To Print
  select ts, category, amount, acct, desc1
  from journals
- where ts between to_date('2014.02.01', 'YYYY.MM.DD') and to_date('2014.03.01', 'YYYY.MM.DD') and
+ where ts between to_date('2014.04.01', 'YYYY.MM.DD') and to_date('2014.06.01', 'YYYY.MM.DD') and
  abs(amount) > 50
  order by abs(amount) desc
  */
