@@ -1,7 +1,7 @@
-package com.accertify.math;
+package com.mrose.math;
 
 import java.util.Arrays;
-import static com.accertify.math.BigInteger.LONG_MASK;
+import static com.mrose.math.BigInteger.LONG_MASK;
 
 /**
  * Immutable, arbitrary-precision signed decimal numbers.  A

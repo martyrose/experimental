@@ -1,4 +1,4 @@
-package com.accertify.math;
+package com.mrose.math;
 
 import java.util.Arrays;
 

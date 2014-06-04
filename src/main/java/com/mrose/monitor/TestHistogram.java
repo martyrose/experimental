@@ -1,7 +1,7 @@
-package com.accertify.monitor;
+package com.mrose.monitor;
 
-import com.accertify.util.Log;
-import com.accertify.util.LogFactory;
+import com.mrose.util.Log;
+import com.mrose.util.LogFactory;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;

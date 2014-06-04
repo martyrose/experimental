@@ -1,4 +1,4 @@
-package com.accertify.util;
+package com.mrose.util;
 
 import java.util.ArrayList;
 import java.util.Collection;

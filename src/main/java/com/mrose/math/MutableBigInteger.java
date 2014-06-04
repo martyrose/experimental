@@ -1,4 +1,4 @@
-package com.accertify.math;
+package com.mrose.math;
 
 /**
  * A class used to represent multiprecision integers that makes efficient
@@ -17,8 +17,8 @@ package com.accertify.math;
  * @since   1.3
  */
 
-import static com.accertify.math.BigDecimal.INFLATED;
-import static com.accertify.math.BigInteger.LONG_MASK;
+import static com.mrose.math.BigDecimal.INFLATED;
+import static com.mrose.math.BigInteger.LONG_MASK;
 import java.util.Arrays;
 
 class MutableBigInteger {

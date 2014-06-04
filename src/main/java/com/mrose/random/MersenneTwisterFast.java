@@ -1,4 +1,4 @@
-package com.accertify.random;
+package com.mrose.random;
 
 import java.io.*;
 import java.util.*;

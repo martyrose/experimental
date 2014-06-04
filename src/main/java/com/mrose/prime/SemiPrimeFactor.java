@@ -1,9 +1,9 @@
-package com.accertify.prime;
+package com.mrose.prime;
 
-import com.accertify.math.BigInteger;
-import com.accertify.random.MersenneTwister;
-import com.accertify.util.Log;
-import com.accertify.util.LogFactory;
+import com.mrose.math.BigInteger;
+import com.mrose.random.MersenneTwister;
+import com.mrose.util.Log;
+import com.mrose.util.LogFactory;
 import java.security.SecureRandom;
 
 /**

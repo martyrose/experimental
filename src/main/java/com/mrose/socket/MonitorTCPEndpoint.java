@@ -1,4 +1,4 @@
-package com.accertify.socket;
+package com.mrose.socket;
 
 import javax.net.SocketFactory;
 import java.io.IOException;

@@ -1,4 +1,4 @@
-package com.accertify.prime;
+package com.mrose.prime;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -14,7 +14,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
-import com.accertify.math.BigInteger;
+import com.mrose.math.BigInteger;
 
 /**
  * Created with IntelliJ IDEA.
@@ -31,7 +31,7 @@ public class ReadCertificate {
             X509Certificate cert = readWWDRCertificate("/tmp/gmail.crt");
             sun.security.rsa.RSAPublicKeyImpl pubKey = (sun.security.rsa.RSAPublicKeyImpl) cert.getPublicKey();
             java.math.BigInteger x = pubKey.getModulus();
-            com.accertify.math.BigInteger modulus = new com.accertify.math.BigInteger(x.toByteArray());
+            com.mrose.math.BigInteger modulus = new com.mrose.math.BigInteger(x.toByteArray());
 
             log.warn("Modulus: " + pubKey.getModulus().toString());
             log.warn("Modulus HEX: " + modulus.toString(16));

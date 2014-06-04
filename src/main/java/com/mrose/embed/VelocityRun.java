@@ -1,4 +1,4 @@
-package com.accertify.embed;
+package com.mrose.embed;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

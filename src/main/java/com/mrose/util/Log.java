@@ -1,4 +1,4 @@
-package com.accertify.util;
+package com.mrose.util;
 
 import java.text.MessageFormat;
 

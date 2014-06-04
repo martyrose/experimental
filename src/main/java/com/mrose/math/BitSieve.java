@@ -1,4 +1,4 @@
-package com.accertify.math;
+package com.mrose.math;
 
 /**
  * A simple bit sieve used for finding prime number candidates. Allows setting

@@ -1,6 +1,6 @@
-package com.accertify.socket;
+package com.mrose.socket;
 
-import com.accertify.crypt.BCrypt;
+import com.mrose.crypt.BCrypt;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

@@ -1,4 +1,4 @@
-package com.accertify.socket;
+package com.mrose.socket;
 
 import java.sql.*;
 import java.text.SimpleDateFormat;

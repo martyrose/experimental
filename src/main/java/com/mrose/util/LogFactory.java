@@ -1,4 +1,4 @@
-package com.accertify.util;
+package com.mrose.util;
 
 public abstract class LogFactory {
 

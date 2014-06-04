@@ -1,4 +1,4 @@
-package com.accertify.dumb;
+package com.mrose.dumb;
 
 import com.google.common.base.Objects;
 import com.google.common.hash.HashCode;

@@ -1,4 +1,4 @@
-package com.accertify.math;
+package com.mrose.math;
 
 /**
  * Specifies a <i>rounding behavior</i> for numerical operations

@@ -1,4 +1,4 @@
-package com.accertify.dumb;
+package com.mrose.dumb;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
