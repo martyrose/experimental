@@ -115,9 +115,9 @@ import java.util.UUID;
  select key from categories
 
  -- event definitions
- select ts, category, event, amount, acct, desc1, desc2, id
- from journals where ts >= to_date('2014.04.01', 'YYYY.MM.DD')
- order by category, ts
+ select key
+ from events
+ order by ts
 
  -- review categorization
  select ts, category, acct, amount, desc1, desc2, id
