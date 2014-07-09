@@ -18,7 +18,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -47,7 +46,7 @@ public class FullCategorization {
 
   private static final DateTime START_TIME = new DateTime(2014, DateTimeConstants.JANUARY, 1, 0, 0,
       zone);
-  private static final DateTime END_TIME = new DateTime(2014, DateTimeConstants.JUNE, 1, 0, 0,
+  private static final DateTime END_TIME = new DateTime(2014, DateTimeConstants.JULY, 1, 0, 0,
       zone);
   private static final DateTimeFormatter dtf = DateTimeFormat.forPattern("MM/dd/yyyy");
 
@@ -93,7 +92,6 @@ public class FullCategorization {
   private static String formatDataRow(CategoryEntries ce) {
     List<String> cells = new LinkedList<>();
     cells.add(ce.category);
-    cells.add(ce.total.toBigInteger().toString());
     DateTime current = START_TIME;
     while (current.isBefore(END_TIME)) {
       if(ce.values.containsKey(current)) {
@@ -110,7 +108,6 @@ public class FullCategorization {
     // Print out header rows
     List<String> cells = new LinkedList<>();
     cells.add("");
-    cells.add("Total");
     DateTime current = START_TIME;
     while (current.isBefore(END_TIME)) {
       cells.add(dtf.print(current));
@@ -150,8 +147,7 @@ public class FullCategorization {
           BigDecimal bd = rs.getBigDecimal(3);
 
           CategoryEntries ce = results.get(category);
-          ce.total = ce.total.add(bd);
-          ce.values.put(dt, bd);
+          ce.addValue(dt, bd);
         }
       }
     }
@@ -167,6 +163,11 @@ public class FullCategorization {
 
     CategoryEntries(String category) {
       this.category = category;
+    }
+
+    public void addValue(DateTime dt, BigDecimal bd) {
+      values.put(dt, bd);
+      total = total.add(bd);
     }
 
     @Override
