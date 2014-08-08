@@ -68,82 +68,104 @@ import java.util.UUID;
  */
 
 /**
- * // Find and evaluate duplicates
- * select * from journals where hash in ( select hash from journals where ts >=
- * to_date('2014.02.01', 'YYYY.MM.DD') group by hash having count(1) > 1 ) order by hash
- *
- * // Look for paying CC bills
- * select ts, category, event, amount, acct, desc1, desc2, id from
- * journals where category is null and ts between to_date('2014.04.01', 'YYYY.MM.DD') and
- * to_date('2014.05.01', 'YYYY.MM.DD') order by abs(amount) desc
- *
- * // auto categorize
- * update journals set category='CHILDCARE' where category is null and
- * lower(desc1) like '%childcare%' and lower(desc1) like 'atm with%'
- *
- * update journals set category='BIGBOX' where category is null and lower(desc1) like '%central
- * checkout%'
- *
- * update journals set category='BIGBOX' where category is null and lower(desc1) like '%amazon%'
- *
- * update journals set category='MEDICAL' where category is null and lower(desc1) like '%medical%'
- *
- * update journals set category='MEDICAL' where category is null and lower(desc1) like '%swedish%'
- *
- * // categorize
- * select ts, category, event, amount, acct, desc1, desc2, id
- * from journals
- * where category is null
- * order by lower(desc1), ts
- *
- * select ts, category, event, amount, acct, desc1, desc2, id
- * from journals
- * where category is null
- * order by ts, desc1
- *
- * -- categories not used
- * select key from categories except select category from journals where ts >= to_date('2014.04.01', 'YYYY.MM.DD')
- *
- * -- categories not defined
- * select category from journals where ts >= to_date('2014.04.01', 'YYYY.MM.DD') except select key from categories
- *
- * -- event definitions select key from events order by ts
- *
- * -- review categorization
- * select ts, category, acct, amount, desc1, desc2, id from journals where
- * ts >= to_date('2014.04.01', 'YYYY.MM.DD') order by category, ts
- *
- * -- Review Category summary
- * select category, count(1), sum(amount) from journals where ts between
- * to_date('2014.04.01', 'YYYY.MM.DD') and to_date('2014.06.01', 'YYYY.MM.DD') group by category
- * order by sum(amount) desc
- *
- * -- Review event summary
- * select event, count(1), sum(amount) from journals where ts between
- * to_date('2014.01.01', 'YYYY.MM.DD') and to_date('2014.06.01', 'YYYY.MM.DD') and event is not null
- * group by event order by sum(amount) desc
- *
- * -- Grand Total
- * select sum(amount) from journals where ts between to_date('2014.04.01',
- * 'YYYY.MM.DD') and to_date('2014.06.01', 'YYYY.MM.DD')
- *
- * -- To Print
- * select ts, category, amount, acct, desc1 from journals where ts between
- * to_date('2014.04.01', 'YYYY.MM.DD') and to_date('2014.06.01', 'YYYY.MM.DD') and abs(amount) > 50
- * order by abs(amount) desc
+# Find and evaluate duplicates
+select *
+from journals
+where hash in (
+  select hash
+  from journals
+  where ts >= to_date('2014.02.01', 'YYYY.MM.DD')
+  group by hash
+  having count(1) > 1
+)
+order by hash
+
+
+# Look for paying CC bills
+select ts, category, event, amount, acct, desc1, desc2, id
+from journals
+where category is null and
+ts between to_date('2014.04.01', 'YYYY.MM.DD') and to_date('2014.05.01', 'YYYY.MM.DD')
+order by abs(amount) desc
+
+# auto categorize
+update journals
+set category='CHILDCARE'
+where category is null and
+lower(desc1) like '%childcare%' and
+lower(desc1) like 'atm with%'
+
+update journals set category='BIGBOX' where category is null and lower(desc1) like '%central checkout%'
+
+update journals set category='BIGBOX' where category is null and lower(desc1) like '%amazon%'
+
+update journals set category='MEDICAL' where category is null and lower(desc1) like '%medical%'
+
+update journals set category='MEDICAL' where category is null and lower(desc1) like '%swedish%'
+
+# categorize
+select ts, category, event, amount, acct, desc1, desc2, id
+from journals
+where category is null
+order by lower(desc1), ts
+
+# review
+select ts, category, event, amount, acct, desc1, desc2, id
+from journals
+where category is null
+order by ts, desc1
+
+# categories not used
+select key from categories except select category from journals where ts >= to_date('2014.04.01', 'YYYY.MM.DD')
+
+# categories not defined
+select category from journals where ts >= to_date('2014.04.01', 'YYYY.MM.DD') except select key from categories
+
+# event definitions
+select key from events order by ts
+
+# review categorization
+select ts, category, acct, amount, desc1, desc2, id
+from journals where
+ts >= to_date('2014.04.01', 'YYYY.MM.DD')
+order by category, ts
+
+# Review Category summary
+select category, count(1), sum(amount)
+from journals where ts between to_date('2014.04.01', 'YYYY.MM.DD') and to_date('2014.06.01', 'YYYY.MM.DD')
+group by category
+order by sum(amount) desc
+
+# Review event summary
+select event, count(1), sum(amount)
+from journals where ts between to_date('2014.01.01', 'YYYY.MM.DD') and to_date('2014.06.01', 'YYYY.MM.DD') and
+event is not null
+group by event
+order by sum(amount) desc
+
+# Grand Total
+select sum(amount)
+from journals
+where ts between to_date('2014.04.01', 'YYYY.MM.DD') and to_date('2014.06.01', 'YYYY.MM.DD')
+
+# To Print
+select ts, category, amount, acct, desc1 from journals where ts between
+to_date('2014.04.01', 'YYYY.MM.DD') and to_date('2014.06.01', 'YYYY.MM.DD') and abs(amount) > 50
+order by abs(amount) desc
  */
 public class LoadFinancialData {
 
   private static final Logger log = LoggerFactory.getLogger(LoadFinancialData.class);
 
-  private static final boolean doCommit = true;
-  private static final String JDBC_URL = "jdbc:postgresql://192.168.56.101:5432/mrose";
+  private static final boolean doCommit = false;
+  private static final String JDBC_URL = "jdbc:postgresql://10.12.17.112:5432/mrose";
   private static final String JDBC_USER = "mrose";
   private static final String JDBC_PASS = "mrose";
 
-  private static final String FILE_PATH = "/tmp/mint.csv";
+  // readlink -f file
+  private static final String FILE_PATH = "/home/mrose/Downloads/3.dat";
   private static final int YEAR = 2014;
-  private static final int MONTH = DateTimeConstants.JUNE;
+  private static final int MONTH = DateTimeConstants.JULY;
 
   private static Connection c;
   private static PreparedStatement ps;
@@ -153,6 +175,8 @@ public class LoadFinancialData {
 
   public static void main(String[] args) {
     int rowsAdded = 1;
+    BigDecimal total = BigDecimal.ZERO;
+
     try {
       c = DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASS);
       c.setAutoCommit(false);
@@ -191,12 +215,14 @@ public class LoadFinancialData {
         }
         addRow(r);
         rowsAdded++;
+        total = total.add(r.amount);
       }
       ps.executeBatch();
       if (doCommit) {
         c.commit();
       }
       log.warn("Rows Processed: " + rowsAdded);
+      log.warn("Total Amount: " + total.toString());
     } catch (SQLException e) {
       try {
         c.rollback();

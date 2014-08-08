@@ -38,7 +38,7 @@ public class FullCategorization {
   private static final Logger log = LoggerFactory.getLogger(FullCategorization.class);
 
   private static final char SEP = ',';
-  private static final String JDBC_URL = "jdbc:postgresql://192.168.56.101:5432/mrose";
+  private static final String JDBC_URL = "jdbc:postgresql://10.12.17.112:5432/mrose";
   private static final String JDBC_USER = "mrose";
   private static final String JDBC_PASS = "mrose";
   // http://joda-time.sourceforge.net/apidocs/org/joda/time/format/DateTimeFormat.html
@@ -46,7 +46,7 @@ public class FullCategorization {
 
   private static final DateTime START_TIME = new DateTime(2014, DateTimeConstants.JANUARY, 1, 0, 0,
       zone);
-  private static final DateTime END_TIME = new DateTime(2014, DateTimeConstants.JULY, 1, 0, 0,
+  private static final DateTime END_TIME = new DateTime(2014, DateTimeConstants.AUGUST, 1, 0, 0,
       zone);
   private static final DateTimeFormatter dtf = DateTimeFormat.forPattern("MM/dd/yyyy");
 
