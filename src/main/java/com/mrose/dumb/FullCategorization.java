@@ -46,7 +46,7 @@ public class FullCategorization {
 
   private static final DateTime START_TIME = new DateTime(2014, DateTimeConstants.JANUARY, 1, 0, 0,
       zone);
-  private static final DateTime END_TIME = new DateTime(2014, DateTimeConstants.AUGUST, 1, 0, 0,
+  private static final DateTime END_TIME = new DateTime(2014, DateTimeConstants.SEPTEMBER, 1, 0, 0,
       zone);
   private static final DateTimeFormatter dtf = DateTimeFormat.forPattern("MM/dd/yyyy");
 

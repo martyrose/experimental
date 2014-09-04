@@ -24,19 +24,6 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- mrose@zeta:~/Documents/finance$ cat convertMint.py
- #!/usr/bin/python
- import csv
- import sys
-
- reader = csv.reader(sys.stdin, delimiter=',', quotechar='"')
- writer = csv.writer(sys.stdout,delimiter='|', lineterminator='\n')
-
- for row in reader:
- writer.writerow(row)
- */
-
-/**
  drop table journals;
  drop table categories;
  drop table events;
@@ -92,8 +79,7 @@ order by abs(amount) desc
 update journals
 set category='CHILDCARE'
 where category is null and
-lower(desc1) like '%childcare%' and
-lower(desc1) like 'atm with%'
+lower(desc1) like '%childcare%'
 
 update journals set category='BIGBOX' where category is null and lower(desc1) like '%central checkout%'
 
@@ -165,7 +151,7 @@ public class LoadFinancialData {
   // readlink -f file
   private static final String FILE_PATH = "/home/mrose/Downloads/3.dat";
   private static final int YEAR = 2014;
-  private static final int MONTH = DateTimeConstants.JULY;
+  private static final int MONTH = DateTimeConstants.AUGUST;
 
   private static Connection c;
   private static PreparedStatement ps;
