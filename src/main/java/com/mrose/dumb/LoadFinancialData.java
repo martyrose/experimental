@@ -95,12 +95,6 @@ from journals
 where category is null
 order by lower(desc1), ts
 
-# review
-select ts, category, event, amount, acct, desc1, desc2, id
-from journals
-where category is null
-order by ts, desc1
-
 # categories not used
 select key from categories except select category from journals where ts >= to_date('2014.04.01', 'YYYY.MM.DD')
 
@@ -143,15 +137,15 @@ public class LoadFinancialData {
 
   private static final Logger log = LoggerFactory.getLogger(LoadFinancialData.class);
 
-  private static final boolean doCommit = false;
-  private static final String JDBC_URL = "jdbc:postgresql://10.12.17.112:5432/mrose";
+  private static final boolean doCommit = true;
+  private static final String JDBC_URL = "jdbc:postgresql://192.168.56.101:5432/mrose";
   private static final String JDBC_USER = "mrose";
   private static final String JDBC_PASS = "mrose";
 
   // readlink -f file
-  private static final String FILE_PATH = "/home/mrose/Downloads/3.dat";
+  private static final String FILE_PATH = "/tmp/fin2.dat";
   private static final int YEAR = 2014;
-  private static final int MONTH = DateTimeConstants.AUGUST;
+  private static final int MONTH = DateTimeConstants.SEPTEMBER;
 
   private static Connection c;
   private static PreparedStatement ps;
