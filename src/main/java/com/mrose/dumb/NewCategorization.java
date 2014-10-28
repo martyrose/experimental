@@ -53,7 +53,7 @@ public class NewCategorization {
       zone);
   private static final DateTime END_TIME = new DateTime(2014, DateTimeConstants.SEPTEMBER, 1, 0, 0,
       zone);
-  private static final DateTimeFormatter dtf = DateTimeFormat.forPattern("MM/yyyy");
+  private static final DateTimeFormatter dtf = DateTimeFormat.forPattern("MMM yyyy");
 
   private static Connection c;
 
@@ -71,11 +71,17 @@ public class NewCategorization {
       Collections.sort(entries, new Comparator<CategoryEntries>() {
         @Override
         public int compare(CategoryEntries ce1, CategoryEntries ce2) {
-          return ce1.total.compareTo(ce2.total);
+          return ce1.total().compareTo(ce2.total());
         }
       });
 
       List<DateTime> months = buildMonths();
+
+      System.out.println(formatHeaderRow(months));
+      for(CategoryEntries ce: entries) {
+        System.out.println(formatDataRow(ce, months));
+      }
+
 
 //      System.out.println(formatHeaderRow());
 //      for(CategoryEntries ce: entries) {
@@ -101,47 +107,47 @@ public class NewCategorization {
 
   private static List<DateTime> buildMonths() {
     List<DateTime> months = Lists.newArrayList();
-    DateTime reference = END_TIME.minusMillis(1);
-    while(reference.isAfter(START_TIME)) {
-      months.add(reference);
-      reference = reference.minusMonths(1);
+    DateTime point = END_TIME;
+    while(!point.isBefore(START_TIME)) {
+      months.add(point);
+      point = point.minusMonths(1);
     }
     return months;
   }
 
-  private static String formatDataRow(CategoryEntries ce) {
+  private static String formatDataRow(CategoryEntries ce, List<DateTime> months) {
     List<String> cells = new LinkedList<>();
     cells.add(ce.category.name);
-    DateTime current = START_TIME;
-    while (current.isBefore(END_TIME)) {
-      if(ce.values.containsKey(current)) {
-        cells.add(ce.values.get(current).toBigInteger().toString());
+    cells.add(ce.category.budget.toBigInteger().toString());
+
+    for(DateTime month: months) {
+      if(ce.values.containsKey(month)) {
+        cells.add(ce.values.get(month).toBigInteger().toString());
       } else {
         cells.add(BigInteger.ZERO.toString());
       }
-      current = current.plusMonths(1);
     }
     return Joiner.on(SEP).join(cells);
   }
 
-  private static String formatHeaderRow() {
+  private static String formatHeaderRow(List<DateTime> months) {
     // Print out header rows
     List<String> cells = new LinkedList<>();
-    cells.add("");
-    DateTime current = START_TIME;
-    while (current.isBefore(END_TIME)) {
-      cells.add(dtf.print(current));
-      current = current.plusMonths(1);
+    cells.add("category");
+    cells.add("budget");
+
+    for(DateTime month: months) {
+      cells.add(dtf.print(month));
     }
     return Joiner.on(SEP).join(cells);
   }
 
-  private static Set<Category> getCategories(Connection c) throws SQLException {
-    Set<Category> results = Sets.newHashSet();
-    try (PreparedStatement ps = c.prepareStatement("select key from categories")) {
+  private static Map<String, Category> getCategories(Connection c) throws SQLException {
+    Map<String, Category> results = Maps.newHashMap();
+    try (PreparedStatement ps = c.prepareStatement("select key, budget from categories")) {
       try (ResultSet rs = ps.executeQuery()) {
         while (rs.next()) {
-          results.add(new Category(rs.getString(1)));
+          results.put(rs.getString(1), new Category(rs.getString(1), rs.getBigDecimal(2)));
         }
       }
     }
@@ -149,21 +155,22 @@ public class NewCategorization {
   }
 
   private static Map<Category, CategoryEntries> getData(Connection c) throws SQLException {
+    Map<String, Category> categories = getCategories(c);
     Map<Category, CategoryEntries> results = Maps.newHashMap();
-    for (Category cc : getCategories(c)) {
+    for (Category cc : categories.values()) {
       results.put(cc, new CategoryEntries(cc));
     }
-    String SQL = " select date_trunc('month', ts), category, sum(amount) "
+    String SQL = "select date_trunc('month', ts), category, sum(amount) "
         + " from journals "
         + " where ts between ? and ? "
         + " group by date_trunc('month', ts), category";
     try (PreparedStatement ps = c.prepareStatement(SQL)) {
       ps.setTimestamp(1, new Timestamp(START_TIME.getMillis()));
-      ps.setTimestamp(2, new Timestamp(END_TIME.getMillis()));
+      ps.setTimestamp(2, new Timestamp(END_TIME.plusMonths(1).getMillis()));
       try (ResultSet rs = ps.executeQuery()) {
         while (rs.next()) {
           DateTime dt = new DateTime(rs.getTimestamp(1).getTime());
-          Category category = new Category(rs.getString(2));
+          Category category = categories.get(rs.getString(2));
           BigDecimal bd = rs.getBigDecimal(3);
 
           CategoryEntries ce = results.get(category);
@@ -175,9 +182,20 @@ public class NewCategorization {
     return results;
   }
 
+  static class JournalEntries {
+    private final Category category;
+    private final DateTime month;
+    private final List<Journal> entries;
+
+    JournalEntries(Category category, DateTime month, List<Journal> entries) {
+      this.category = category;
+      this.month = month;
+      this.entries = entries;
+    }
+  }
+
   static class CategoryEntries {
     private final Category category;
-    private BigDecimal total = BigDecimal.ZERO;
     private final Map<DateTime, BigDecimal> values = new HashMap<>();
 
     CategoryEntries(Category category) {
@@ -186,26 +204,45 @@ public class NewCategorization {
 
     public void addValue(DateTime dt, BigDecimal bd) {
       values.put(dt, bd);
-      total = total.add(bd);
     }
 
     @Override
     public String toString() {
       SortedMap<DateTime, BigDecimal> z = new TreeMap<>(values);
-      return "[category=" + category.name + "; total=" + total.toString() + "; values=" + z.toString()
+      return "[category=" + category.name + "; budget=" + category.budget.toString() + "; total=" + total().toString() + "; values=" + z.toString()
           + "]";
+    }
+
+    public BigDecimal total() {
+      BigDecimal total = BigDecimal.ZERO;
+      for( BigDecimal bd: values.values() ) {
+        total = total.add(bd);
+      }
+      return total;
+    }
+  }
+
+  static class Journal {
+    private final DateTime ts;
+    private final String desc1;
+    private final String desc2;
+    private final BigDecimal amount;
+
+    Journal(DateTime ts, String desc1, String desc2, BigDecimal amount) {
+      this.ts = ts;
+      this.desc1 = desc1;
+      this.desc2 = desc2;
+      this.amount = amount;
     }
   }
 
   static class Category {
     private final String name;
+    private final BigDecimal budget;
 
-    Category(String name) {
+    Category(String name,BigDecimal budget) {
       this.name = name;
-    }
-
-    String name() {
-      return name;
+      this.budget = budget;
     }
 
     @Override
