@@ -9,6 +9,7 @@ import com.mrose.dumb.FullCategorization;
 import org.apache.commons.lang3.tuple.Pair;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.LocalDate;
 import org.joda.time.YearMonth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -76,7 +78,7 @@ public class NewCategorization {
         if( monies > budget ) {
           continue;
         }
-        long overSpend = budget - monies;
+        int overSpend = budget - monies;
         // If absolute value is small just ignore it
         if (overSpend < 100) {
           continue;
@@ -108,9 +110,30 @@ public class NewCategorization {
         }
       }));
 
-      log.warn("" + overCategories.size());
-//      log.warn("Category " + cat.name() + " had a budget of " + Math.abs(budget) + " against expenditures of " + Math.abs(monies));
-//      log.warn("\tThat is " + overSpend + " over which is " + ((int)(overSpendPercent*100)) + "%");
+      for (Pair<Category, Integer> p : overCategories) {
+        Category cat = p.getKey();
+        int budget = cat.budget();
+        int monies = p.getValue();
+        int overSpend = budget - monies;
+        float overSpendPercent = ((float) monies / (float) budget);
+        log.warn("Category " + cat.name() + " had a budget of " + Math.abs(budget)
+            + " against expenditures of " + Math.abs(monies));
+        log.warn(
+            "\tThat is " + overSpend + " over which is " + ((int) (overSpendPercent * 100)) + "%");
+
+        List<Journal> journals = new ArrayList<>(getJournals(c, p.getLeft(), END_TIME));
+        Collections.sort(journals, new Comparator<Journal>() {
+          @Override
+          public int compare(Journal o1, Journal o2) {
+            return o1.amount.compareTo(o2.amount);
+          }
+        });
+        for(Journal j: journals) {
+          log.warn("\t" + j.amount + " " + j.desc1 + " " + j.desc2);
+        }
+        log.warn("");
+      }
+
 
     } catch (Throwable e) {
       log.warn("Line: " + lineNumber + " : " + e.getMessage(), e);
@@ -176,25 +199,35 @@ public class NewCategorization {
     return results;
   }
 
-  static class JournalEntries {
-    private final Category category;
-    private final DateTime month;
-    private final List<Journal> entries;
+  private static Collection<Journal> getJournals(Connection c, Category cat, YearMonth month) throws SQLException {
+    String SQL = "select ts, desc1, desc2, amount "
+        + " from journals "
+        + " where ts between ? and ? "
+        + " and category = ?";
 
-    JournalEntries(Category category, DateTime month, List<Journal> entries) {
-      this.category = category;
-      this.month = month;
-      this.entries = entries;
+    Collection<Journal> journals = new ArrayList<>();
+
+    try(PreparedStatement ps = c.prepareStatement(SQL)) {
+      ps.setTimestamp(1, new Timestamp(month.toLocalDate(1).toDateTimeAtStartOfDay().getMillis()));
+      ps.setTimestamp(2, new Timestamp(month.plusMonths(1).toLocalDate(1).toDateTimeAtStartOfDay().getMillis()));
+      ps.setString(3, cat.name());
+      try(ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+          journals.add(new Journal(new LocalDate(rs.getDate(1)), rs.getString(2), rs.getString(3),
+              rs.getInt(4)));
+        }
+      }
     }
+    return journals;
   }
 
   static class Journal {
-    private final DateTime ts;
+    private final LocalDate ts;
     private final String desc1;
     private final String desc2;
     private final Integer amount;
 
-    Journal(DateTime ts, String desc1, String desc2, Integer amount) {
+    Journal(LocalDate ts, String desc1, String desc2, Integer amount) {
       this.ts = ts;
       this.desc1 = desc1;
       this.desc2 = desc2;
