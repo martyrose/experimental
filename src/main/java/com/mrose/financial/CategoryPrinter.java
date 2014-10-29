@@ -8,7 +8,6 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 import java.io.PrintStream;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -21,6 +20,7 @@ import java.util.Map.Entry;
  * Created by martinrose on 10/29/14.
  */
 class CategoryPrinter {
+  private static final int ZERO = 0;
   private static final char SEP = ',';
   // http://joda-time.sourceforge.net/apidocs/org/joda/time/format/DateTimeFormat.html
   private static final DateTimeFormatter dtf = DateTimeFormat.forPattern("MMM yyyy");
@@ -31,39 +31,39 @@ class CategoryPrinter {
     this.stream = stream;
   }
 
-  public void print(Map<Category, Map<YearMonth, BigInteger>> data, List<YearMonth> months) {
-    List<Entry<Category, Map<YearMonth, BigInteger>>> entries = new ArrayList<>(data.entrySet());
+  public void print(Map<Category, Map<YearMonth, Integer>> data, List<YearMonth> months) {
+    List<Entry<Category, Map<YearMonth, Integer>>> entries = new ArrayList<>(data.entrySet());
 
-    final Function<Map<YearMonth, BigInteger>, BigInteger> summer = new MapSummation<>();
+    final Function<Map<YearMonth, Integer>, Integer> summer = new MapSummation<>();
 
     // sort them by amount
-    Collections.sort(entries, new Comparator<Entry<Category, Map<YearMonth, BigInteger>>>() {
+    Collections.sort(entries, new Comparator<Entry<Category, Map<YearMonth, Integer>>>() {
       @Override
-      public int compare(Entry<Category, Map<YearMonth, BigInteger>> o1,
-          Entry<Category, Map<YearMonth, BigInteger>> o2) {
-        BigInteger total1 = summer.apply(o1.getValue());
-        BigInteger total2 = summer.apply(o2.getValue());
+      public int compare(Entry<Category, Map<YearMonth, Integer>> o1,
+          Entry<Category, Map<YearMonth, Integer>> o2) {
+        Integer total1 = summer.apply(o1.getValue());
+        Integer total2 = summer.apply(o2.getValue());
         return total1.compareTo(total2);
       }
     });
 
     stream.println(formatHeaderRow(months));
-    for (Entry<Category, Map<YearMonth, BigInteger>> e : entries) {
+    for (Entry<Category, Map<YearMonth, Integer>> e : entries) {
       stream.println(formatDataRow(e, months));
     }
   }
 
-  private static String formatDataRow(Entry<Category, Map<YearMonth, BigInteger>> e,
+  private static String formatDataRow(Entry<Category, Map<YearMonth, Integer>> e,
       List<YearMonth> months) {
     List<String> cells = new LinkedList<>();
     cells.add(e.getKey().name());
-    cells.add(e.getKey().budget().toBigInteger().toString());
+    cells.add(String.valueOf(e.getKey().budget()));
 
     for (YearMonth month : months) {
       if (e.getValue().containsKey(month)) {
         cells.add(e.getValue().get(month).toString());
       } else {
-        cells.add(BigInteger.ZERO.toString());
+        cells.add(String.valueOf(ZERO));
       }
     }
     return Joiner.on(SEP).join(cells);

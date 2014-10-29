@@ -1,8 +1,6 @@
 package com.mrose.financial;
 
 import com.google.common.base.MoreObjects;
-
-import java.math.BigDecimal;
 import java.util.Objects;
 
 /**
@@ -10,9 +8,9 @@ import java.util.Objects;
  */
 class Category {
   private final String name;
-  private final BigDecimal budget;
+  private final int budget;
 
-  Category(String name, BigDecimal budget) {
+  Category(String name, int budget) {
     this.name = name;
     this.budget = budget;
   }
@@ -33,7 +31,7 @@ class Category {
     return name;
   }
 
-  public BigDecimal budget() {
+  public int budget() {
     return budget;
   }
 
@@ -44,6 +42,6 @@ class Category {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this).add("name", name).add("budget", budget.toString()).toString();
+    return MoreObjects.toStringHelper(this).add("name", name).add("budget", budget).toString();
   }
 }
