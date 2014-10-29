@@ -1,5 +1,7 @@
 package com.mrose.financial;
 
+import com.google.common.base.MoreObjects;
+
 import java.math.BigDecimal;
 import java.util.Objects;
 
@@ -38,5 +40,10 @@ class Category {
   @Override
   public int hashCode() {
     return Objects.hash(name);
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this).add("name", name).add("budget", budget.toString()).toString();
   }
 }

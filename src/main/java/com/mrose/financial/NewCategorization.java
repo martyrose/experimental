@@ -1,17 +1,15 @@
 package com.mrose.financial;
 
 import com.google.common.base.Function;
-import com.google.common.base.Joiner;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 
 import com.mrose.dumb.FullCategorization;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.YearMonth;
-import org.joda.time.chrono.ISOChronology;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,10 +22,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -38,7 +33,6 @@ import java.util.Map.Entry;
 public class NewCategorization {
   private static final Logger log = LoggerFactory.getLogger(FullCategorization.class);
 
-  private static final char SEP = ',';
   private static final String DB_IP = "192.168.56.101";
   private static final String JDBC_URL = "jdbc:postgresql://" + DB_IP + ":5432/mrose";
   private static final String JDBC_USER = "mrose";
@@ -46,9 +40,6 @@ public class NewCategorization {
 
   private static final YearMonth START_TIME = new YearMonth(2014, DateTimeConstants.JANUARY);
   private static final YearMonth END_TIME = new YearMonth(2014, DateTimeConstants.SEPTEMBER);
-
-  // http://joda-time.sourceforge.net/apidocs/org/joda/time/format/DateTimeFormat.html
-  private static final DateTimeFormatter dtf = DateTimeFormat.forPattern("MMM yyyy");
 
   private static Connection c;
 
@@ -60,26 +51,51 @@ public class NewCategorization {
 
       List<YearMonth> months = buildMonths();
 
-      Map<Category, Map<YearMonth, BigDecimal>> results = getSummaryData(c, months);
-      List<Entry<Category, Map<YearMonth, BigDecimal>>> entries = new ArrayList<>(results.entrySet());
+      Map<Category, Map<YearMonth, BigInteger>> categoryData = getSummaryData(c, months);
+      CategoryPrinter printer = new CategoryPrinter(System.out);
+      printer.print(categoryData, months);
 
-      final Function<Map<YearMonth, BigDecimal>, BigDecimal> summer = new MapSummation<>();
+      Function<Entry<Category, Map<YearMonth, BigInteger>>, Pair<Category, BigInteger>> flatten =
+          new MonthFlatten(END_TIME);
+      Map<Category, BigInteger> lastMonth = new PairToMap<Category, BigInteger>()
+          .apply(Iterables.transform(categoryData.entrySet(), flatten));
 
-      // sort them by amount
-      Collections.sort(entries, new Comparator<Entry<Category, Map<YearMonth, BigDecimal>>>() {
-        @Override
-        public int compare(Entry<Category, Map<YearMonth, BigDecimal>> o1,
-            Entry<Category, Map<YearMonth, BigDecimal>> o2) {
-          BigDecimal total1 = summer.apply(o1.getValue());
-          BigDecimal total2 = summer.apply(o2.getValue());
-          return total1.compareTo(total2);
+      List<Pair<Category, BigInteger>> overCategories = new ArrayList<>();
+
+      for (Map.Entry<Category, BigInteger> e : lastMonth.entrySet()) {
+        Category cat = e.getKey();
+        int monies = e.getValue().intValue();
+        int budget = cat.budget().intValue();
+
+        // ignore where monies > 0
+        if( monies > 0 ) {
+          continue;
         }
-      });
-
-      System.out.println(formatHeaderRow(months));
-      for(Entry<Category, Map<YearMonth, BigDecimal>> e: entries) {
-        System.out.println(formatDataRow(e, months));
+        // Only interested where we spent more than we budgeted
+        // so if monies > budget continue
+        if( monies > budget ) {
+          continue;
+        }
+        long overSpend = budget - monies;
+        // If absolute value is small just ignore it
+        if (overSpend < 100) {
+          continue;
+        }
+        float overSpendPercent = ((float)monies / (float)budget);
+        // If less than 10% over just ignore it
+        if( overSpendPercent < 1.1 ) {
+          continue;
+        }
+        if( "SAVING".equals(cat.name())) {
+          continue;
+        }
+        overCategories.add(Pair.of(e.getKey(), e.getValue()));
       }
+
+
+//      log.warn("Category " + cat.name() + " had a budget of " + Math.abs(budget) + " against expenditures of " + Math.abs(monies));
+//      log.warn("\tThat is " + overSpend + " over which is " + ((int)(overSpendPercent*100)) + "%");
+
     } catch (Throwable e) {
       log.warn("Line: " + lineNumber + " : " + e.getMessage(), e);
     } finally {
@@ -97,32 +113,7 @@ public class NewCategorization {
     return months;
   }
 
-  private static String formatDataRow(Entry<Category, Map<YearMonth, BigDecimal>> e, List<YearMonth> months) {
-    List<String> cells = new LinkedList<>();
-    cells.add(e.getKey().name());
-    cells.add(e.getKey().budget().toBigInteger().toString());
 
-    for(YearMonth month: months) {
-      if(e.getValue().containsKey(month)) {
-        cells.add(e.getValue().get(month).toBigInteger().toString());
-      } else {
-        cells.add(BigInteger.ZERO.toString());
-      }
-    }
-    return Joiner.on(SEP).join(cells);
-  }
-
-  private static String formatHeaderRow(List<YearMonth> months) {
-    // Print out header rows
-    List<String> cells = new LinkedList<>();
-    cells.add("category");
-    cells.add("budget");
-
-    for(YearMonth month: months) {
-      cells.add(dtf.print(month));
-    }
-    return Joiner.on(SEP).join(cells);
-  }
 
   private static Map<String, Category> getCategories(Connection c) throws SQLException {
     Map<String, Category> results = Maps.newHashMap();
@@ -136,17 +127,17 @@ public class NewCategorization {
     return results;
   }
 
-  private static Map<Category, Map<YearMonth, BigDecimal>> getSummaryData(Connection c,
+  private static Map<Category, Map<YearMonth, BigInteger>> getSummaryData(Connection c,
       List<YearMonth> months) throws SQLException {
     Map<String, Category> categories = getCategories(c);
-    Map<Category, Map<YearMonth, BigDecimal>> results = new HashMap<>();
+    Map<Category, Map<YearMonth, BigInteger>> results = new HashMap<>();
 
     for (Category cc : categories.values()) {
-      Map<YearMonth, BigDecimal> entries = Maps.newHashMap();
+      Map<YearMonth, BigInteger> entries = Maps.newHashMap();
       for (YearMonth month : months) {
-        entries.put(month, BigDecimal.ZERO);
+        entries.put(month, BigInteger.ZERO);
       }
-      results.put(cc, new HashMap<>());
+      results.put(cc, entries);
     }
 
     String SQL = "select date_trunc('month', ts), category, sum(amount) "
@@ -160,8 +151,8 @@ public class NewCategorization {
         while (rs.next()) {
           YearMonth dt = new YearMonth(rs.getTimestamp(1).getTime());
           Category category = categories.get(rs.getString(2));
-          BigDecimal bd = rs.getBigDecimal(3);
-          results.get(category).put(dt, bd);
+          BigInteger bi = rs.getBigDecimal(3).toBigInteger();
+          results.get(category).put(dt, bi);
         }
       }
     }
@@ -185,9 +176,9 @@ public class NewCategorization {
     private final DateTime ts;
     private final String desc1;
     private final String desc2;
-    private final BigDecimal amount;
+    private final BigInteger amount;
 
-    Journal(DateTime ts, String desc1, String desc2, BigDecimal amount) {
+    Journal(DateTime ts, String desc1, String desc2, BigInteger amount) {
       this.ts = ts;
       this.desc1 = desc1;
       this.desc2 = desc2;
