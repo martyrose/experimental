@@ -14,6 +14,7 @@ public class VelocityRun {
     private static final Logger log = LoggerFactory.getLogger(VelocityRun.class);
 
     public static void main(String[] args) throws Exception {
-        new TomcatEmbeddedRunner().startServer();
+      log.warn("Starting up!");
+      new TomcatEmbeddedRunner().startServer();
     }
 }

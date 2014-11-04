@@ -13,57 +13,64 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * User: mrose
- * Date: 1/10/14
- * Time: 10:38 AM
- * <p/>
- * Comments
+ * User: mrose Date: 1/10/14 Time: 10:38 AM <p/> Comments
  */
 public class TomcatEmbeddedRunner {
-    private static final Logger log = LoggerFactory.getLogger(TomcatEmbeddedRunner.class);
 
-    private static final CountDownLatch KEEP_RUNNING = new CountDownLatch(1);
+  private static final Logger log = LoggerFactory.getLogger(TomcatEmbeddedRunner.class);
 
-    public void startServer() throws LifecycleException {
-        Tomcat tomcat = new Tomcat();
-        tomcat.setPort(8080);
-        File base = new File(System.getProperty("java.io.tmpdir"));
-        Context rootCtx = tomcat.addContext("", base.getAbsolutePath());
+  private static final CountDownLatch KEEP_RUNNING = new CountDownLatch(1);
 
-        Tomcat.addServlet(rootCtx, "KillServlet", new KillServlet());
-        rootCtx.addServletMapping("/shutdown", "KillServlet");
+  public void startServer() throws LifecycleException {
+    Tomcat tomcat = new Tomcat();
+    tomcat.setPort(8080);
+    File base = new File(System.getProperty("java.io.tmpdir"));
+    Context rootCtx = tomcat.addContext("", base.getAbsolutePath());
 
-        Tomcat.addServlet(rootCtx, "EchoServlet", new EchoServlet());
-        rootCtx.addServletMapping("/*", "EchoServlet");
-        tomcat.start();
+    Tomcat.addServlet(rootCtx, "KillServlet", new KillServlet());
+    rootCtx.addServletMapping("/shutdown", "KillServlet");
 
-        try {
-            KEEP_RUNNING.await();
-        } catch (InterruptedException e) {
-            ;
-        }
+    Tomcat.addServlet(rootCtx, "EchoServlet", new EchoServlet());
+    rootCtx.addServletMapping("/*", "EchoServlet");
+    long t1 = System.currentTimeMillis();
+    tomcat.init();
+    tomcat.start();
+    long t2 = System.currentTimeMillis();
+
+    log.warn("Startup took: " + (t2 - t1) + " ms");
+    try {
+      KEEP_RUNNING.await();
+    } catch (InterruptedException e) {
+      tomcat.stop();
+      tomcat.destroy();
     }
+  }
 
-    static class EchoServlet extends HttpServlet {
-        private final DateTimeFormatter fmt = ISODateTimeFormat.dateTime();
+  static class EchoServlet extends HttpServlet {
 
-        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-            resp.getWriter().write(fmt.print(System.currentTimeMillis()));
-            resp.getWriter().write(SystemUtils.LINE_SEPARATOR);
-        }
+    private final DateTimeFormatter fmt = ISODateTimeFormat.dateTime();
+
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+        throws ServletException, IOException {
+      resp.getWriter().write(fmt.print(System.currentTimeMillis()));
+      resp.getWriter().write(SystemUtils.LINE_SEPARATOR);
     }
+  }
 
-    static class KillServlet extends HttpServlet {
-        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-            resp.getWriter().write("OK");
-            resp.getWriter().write(SystemUtils.LINE_SEPARATOR);
-            KEEP_RUNNING.countDown();
-        }
+  static class KillServlet extends HttpServlet {
+
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+        throws ServletException, IOException {
+      resp.getWriter().write("OK");
+      resp.getWriter().write(SystemUtils.LINE_SEPARATOR);
+      KEEP_RUNNING.countDown();
     }
+  }
 }

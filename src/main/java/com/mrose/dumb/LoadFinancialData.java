@@ -7,6 +7,7 @@ import com.google.common.hash.Hashing;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.YearMonth;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
@@ -82,11 +83,33 @@ update journals set category='BIGBOX' where category is null and lower(desc1) li
 
 update journals set category='BIGBOX' where category is null and lower(desc1) like '%amazon%'
 
+ update journals set category='BIGBOX' where category is null and lower(desc1) like 'target%'
+
 update journals set category='MEDICAL' where category is null and lower(desc1) like '%medical%'
 
 update journals set category='MEDICAL' where category is null and lower(desc1) like '%swedish%'
 
-# categorize
+update journals set category='MISC' where category is null and lower(desc1) like '% misc%'
+
+update journals set category='CASH' where category is null and lower(desc1) like '% cash%'
+
+update journals set category='GROCERY' where category is null and lower(desc1) like '% grocery%'
+
+update journals set category='BIGBOX' where category is null and lower(desc1) like '% bigbox%'
+
+update journals set category='GIFT' where category is null and lower(desc1) like '% gift%'
+
+update journals set category='HOMEOP' where category is null and lower(desc1) like '% homeop%'
+
+update journals set category='TRAVEL' where category is null and lower(desc1) like '% travel%'
+
+ # Check on auto-categorize
+select ts, category, event, amount, acct, desc1, desc2, id
+from journals
+where ts >= to_date('2014.10.01', 'YYYY.MM.DD') and category is not null
+order by category
+
+ # categorize
 select ts, category, event, amount, acct, desc1, desc2, id
 from journals
 where category is null
@@ -140,9 +163,8 @@ public class LoadFinancialData {
   private static final String JDBC_PASS = "mrose";
 
   // readlink -f file
-  private static final String FILE_PATH = "/tmp/fin2.dat";
-  private static final int YEAR = 2014;
-  private static final int MONTH = DateTimeConstants.SEPTEMBER;
+  private static final String FILE_PATH = "/usr/local/google/home/martinrose/mint.dat";
+  private static final YearMonth LOAD_MONTH = new YearMonth(2014, DateTimeConstants.OCTOBER);
 
   private static Connection c;
   private static PreparedStatement ps;
@@ -151,7 +173,7 @@ public class LoadFinancialData {
   private static final DateTimeFormatter dtf = DateTimeFormat.forPattern("MM/dd/yyyy");
 
   public static void main(String[] args) {
-    int rowsAdded = 1;
+    int rowsAdded = 0;
     BigDecimal total = BigDecimal.ZERO;
 
     try {
@@ -181,10 +203,10 @@ public class LoadFinancialData {
         }
         r.acct = cleanup(parts[6]);
 
-        if (r.ts.getYear() != YEAR) {
+        if (r.ts.getYear() != LOAD_MONTH.getYear()) {
           continue;
         }
-        if (r.ts.getMonthOfYear() != MONTH) {
+        if (r.ts.getMonthOfYear() != LOAD_MONTH.getMonthOfYear()) {
           continue;
         }
         if (r.amount.compareTo(BigDecimal.ZERO) == 0) {
