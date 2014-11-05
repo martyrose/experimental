@@ -1,4 +1,4 @@
-package com.mrose.dumb;
+package com.mrose.financial;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

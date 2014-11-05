@@ -1,4 +1,4 @@
-package com.mrose.dumb;
+package com.mrose.financial;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.hash.HashCode;
