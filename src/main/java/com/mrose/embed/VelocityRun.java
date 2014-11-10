@@ -15,6 +15,7 @@ public class VelocityRun {
 
     public static void main(String[] args) throws Exception {
       log.warn("Starting up!");
-      new TomcatEmbeddedRunner().startServer();
+      // new TomcateEmbeddedServer().startServer();
+      new JettyEmbeddedServer().startServer();
     }
 }

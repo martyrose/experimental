@@ -17,14 +17,13 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * User: mrose Date: 1/10/14 Time: 10:38 AM <p/> Comments
  */
-public class TomcatEmbeddedRunner {
+public class TomcateEmbeddedServer {
 
-  private static final Logger log = LoggerFactory.getLogger(TomcatEmbeddedRunner.class);
+  private static final Logger log = LoggerFactory.getLogger(TomcateEmbeddedServer.class);
 
   private static final CountDownLatch KEEP_RUNNING = new CountDownLatch(1);
 
@@ -54,7 +53,6 @@ public class TomcatEmbeddedRunner {
   }
 
   static class EchoServlet extends HttpServlet {
-
     private final DateTimeFormatter fmt = ISODateTimeFormat.dateTime();
 
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
