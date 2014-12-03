@@ -1,10 +1,8 @@
 package com.mrose.financial;
 
-import com.google.common.base.Function;
-import com.google.common.base.StandardSystemProperty;
 import com.google.common.base.Strings;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+
 import org.apache.commons.lang3.tuple.Pair;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.YearMonth;
@@ -24,21 +22,20 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 /**
- * Created by martinrose on 9/5/14.
+ * Created by martinrose on 12/3/14.
  */
-public class Categorization {
-  private static final Logger log = LoggerFactory.getLogger(Categorization.class);
+public class CategoryOverage {
+  private static final Logger log = LoggerFactory.getLogger(CategoryOverage.class);
 
   private static final String DB_IP = "192.168.56.101";
   private static final String JDBC_URL = "jdbc:postgresql://" + DB_IP + ":5432/mrose";
   private static final String JDBC_USER = "mrose";
   private static final String JDBC_PASS = "mrose";
 
-  private static final YearMonth START_TIME = new YearMonth(2014, DateTimeConstants.JANUARY);
-  private static final YearMonth END_TIME = new YearMonth(2014, DateTimeConstants.OCTOBER);
+  private static final Integer THRESHOLD = -100;
+  private static final YearMonth END_TIME = new YearMonth(2014, DateTimeConstants.NOVEMBER);
 
   private static Connection c;
 
@@ -47,18 +44,7 @@ public class Categorization {
     try {
       c = DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASS);
       c.setAutoCommit(false);
-
-      List<YearMonth> months = buildMonths();
-
-      Map<Category, Map<YearMonth, Integer>> categoryData = getSummaryData(c, months);
-      CategoryPrinter printer = new CategoryPrinter(System.out);
-      printer.print(categoryData, months);
-
-      Function<Entry<Category, Map<YearMonth, Integer>>, Pair<Category, Integer>> flatten =
-          new MonthFlatten(END_TIME);
-      Map<Category, Integer> lastMonth = new PairToMap<Category, Integer>()
-          .apply(Iterables.transform(categoryData.entrySet(), flatten));
-
+      Map<Category, Integer> lastMonth = getSummaryData(c);
       List<Pair<Category, Integer>> overCategories = new ArrayList<>();
 
       for (Map.Entry<Category, Integer> e : lastMonth.entrySet()) {
@@ -107,10 +93,6 @@ public class Categorization {
         }
       }));
 
-      System.out.println(StandardSystemProperty.LINE_SEPARATOR.value());
-      System.out.println(StandardSystemProperty.LINE_SEPARATOR.value());
-      System.out.println(StandardSystemProperty.LINE_SEPARATOR.value());
-
       for (Pair<Category, Integer> p : overCategories) {
         Category cat = p.getKey();
         final int budget = Math.abs(cat.budget()) == 1 ? 0 : cat.budget();
@@ -125,13 +107,7 @@ public class Categorization {
               "\tThat is " + overSpend + " over which is " + ((int) (overSpendPercent * 100)) + "%");
         }
 
-        List<Journal> journals = new ArrayList<>(getJournals(c, p.getLeft(), END_TIME));
-        Collections.sort(journals, new Comparator<Journal>() {
-          @Override
-          public int compare(Journal o1, Journal o2) {
-            return o1.amount().compareTo(o2.amount());
-          }
-        });
+        List<Journal> journals = getJournals(c, p.getLeft());
         for(Journal j: journals) {
           if (j.amount() < -10) {
             String amount = Strings.padStart(String.valueOf(j.amount()), 7, ' ');
@@ -141,22 +117,15 @@ public class Categorization {
         System.out.println("");
       }
 
+      System.out.println("Expenses over $100");
+      for(Journal j: getJournalsOverAmount(c)) {
+        String amount = Strings.padStart(String.valueOf(j.amount()), 7, ' ');
+        System.out.println("\t" + amount + "   ==>  " + j.desc1());
+      }
 
     } catch (Throwable e) {
       log.warn("Line: " + lineNumber + " : " + e.getMessage(), e);
-    } finally {
-      ;
     }
-  }
-
-  private static List<YearMonth> buildMonths() {
-    List<YearMonth> months = new ArrayList<>();
-    YearMonth point = END_TIME;
-    while(!point.isBefore(START_TIME)) {
-      months.add(point);
-      point = point.minusMonths(1);
-    }
-    return months;
   }
 
   private static Map<String, Category> getCategories(Connection c) throws SQLException {
@@ -171,17 +140,12 @@ public class Categorization {
     return results;
   }
 
-  private static Map<Category, Map<YearMonth, Integer>> getSummaryData(Connection c,
-      List<YearMonth> months) throws SQLException {
+  private static Map<Category, Integer> getSummaryData(Connection c) throws SQLException {
     Map<String, Category> categories = getCategories(c);
-    Map<Category, Map<YearMonth, Integer>> results = new HashMap<>();
+    Map<Category, Integer> results = new HashMap<>();
 
     for (Category cc : categories.values()) {
-      Map<YearMonth, Integer> entries = Maps.newHashMap();
-      for (YearMonth month : months) {
-        entries.put(month, 0);
-      }
-      results.put(cc, entries);
+      results.put(cc, 0);
     }
 
     String SQL = "select date_trunc('month', ts), category, sum(amount) "
@@ -189,14 +153,13 @@ public class Categorization {
         + " where ts between ? and ? "
         + " group by date_trunc('month', ts), category";
     try (PreparedStatement ps = c.prepareStatement(SQL)) {
-      ps.setTimestamp(1, new Timestamp(START_TIME.toLocalDate(1).toDateTimeAtStartOfDay().getMillis()));
+      ps.setTimestamp(1, new Timestamp(END_TIME.toLocalDate(1).toDateTimeAtStartOfDay().getMillis()));
       ps.setTimestamp(2, new Timestamp(END_TIME.plusMonths(1).toLocalDate(1).toDateTimeAtStartOfDay().getMillis()));
       try (ResultSet rs = ps.executeQuery()) {
         while (rs.next()) {
-          YearMonth dt = new YearMonth(rs.getTimestamp(1).getTime());
           Category category = categories.get(rs.getString(2));
           int bi = rs.getInt(3);
-          results.get(category).put(dt, bi);
+          results.put(category, bi);
         }
       }
     }
@@ -204,17 +167,18 @@ public class Categorization {
     return results;
   }
 
-  private static Collection<Journal> getJournals(Connection c, Category cat, YearMonth month) throws SQLException {
+  private static List<Journal> getJournals(Connection c, Category cat) throws SQLException {
     String SQL = "select desc1, amount "
         + " from journals "
         + " where ts between ? and ? "
-        + " and category = ?";
+        + " and category = ?"
+        + " order by amount";
 
-    Collection<Journal> journals = new ArrayList<>();
+    List<Journal> journals = new ArrayList<>();
 
     try(PreparedStatement ps = c.prepareStatement(SQL)) {
-      ps.setTimestamp(1, new Timestamp(month.toLocalDate(1).toDateTimeAtStartOfDay().getMillis()));
-      ps.setTimestamp(2, new Timestamp(month.plusMonths(1).toLocalDate(1).toDateTimeAtStartOfDay().getMillis()));
+      ps.setTimestamp(1, new Timestamp(END_TIME.toLocalDate(1).toDateTimeAtStartOfDay().getMillis()));
+      ps.setTimestamp(2, new Timestamp(END_TIME.plusMonths(1).toLocalDate(1).toDateTimeAtStartOfDay().getMillis()));
       ps.setString(3, cat.name());
       try(ResultSet rs = ps.executeQuery()) {
         while (rs.next()) {
@@ -224,4 +188,27 @@ public class Categorization {
     }
     return journals;
   }
+
+  private static List<Journal> getJournalsOverAmount(Connection c) throws SQLException {
+    String SQL = "select desc1, amount "
+        + " from journals "
+        + " where ts between ? and ? "
+        + " and amount <= ?"
+        + " order by amount";
+
+    List<Journal> journals = new ArrayList<>();
+
+    try(PreparedStatement ps = c.prepareStatement(SQL)) {
+      ps.setTimestamp(1, new Timestamp(END_TIME.toLocalDate(1).toDateTimeAtStartOfDay().getMillis()));
+      ps.setTimestamp(2, new Timestamp(END_TIME.plusMonths(1).toLocalDate(1).toDateTimeAtStartOfDay().getMillis()));
+      ps.setInt(3, THRESHOLD);
+      try(ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+          journals.add(new Journal(rs.getString(1), rs.getInt(2)));
+        }
+      }
+    }
+    return journals;
+  }
+
 }

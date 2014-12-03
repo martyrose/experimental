@@ -10,7 +10,7 @@ import java.util.Map.Entry;
 /**
  * Created by martinrose on 10/29/14.
  */
-public class MonthFlatten implements
+class MonthFlatten implements
     Function<Entry<Category, Map<YearMonth, Integer>>, Pair<Category, Integer>> {
   private final YearMonth month;
   public MonthFlatten(YearMonth month) {
