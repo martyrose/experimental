@@ -20,10 +20,13 @@ public class ArrayFetch {
   private void run() {
     list_1.add("a");
     list_1.add("b");
+    list_1.add("c");
     list_2.add("a");
     list_2.add("b");
+    list_2.add("c");
     list_3.add("a");
     list_3.add("b");
+    list_3.add("c");
 
     // JIT System.nanoTime() and ArrayList.get()
     long t1 = 0;

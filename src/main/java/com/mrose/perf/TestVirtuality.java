@@ -10,9 +10,9 @@ public class TestVirtuality {
     t.go();
   }
 
+  public static final ArrayList<String> cc = new ArrayList<String>();
   public static List<String> aa = new ArrayList<String>();
   public static ArrayList<String> bb = new ArrayList<String>();
-  public static final ArrayList<String> cc = new ArrayList<String>();
 
   static {
     aa.add("a");

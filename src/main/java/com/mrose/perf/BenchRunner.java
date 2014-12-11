@@ -29,9 +29,7 @@ public class BenchRunner {
   }
 
   public static void runThis(int numInterval, int[] threadnums, Benchable r) {
-
     interval = numInterval;
-
     for (int g = 0; g < threadnums.length; ++g) {
       started.set(0);
       System.out.println();
@@ -79,10 +77,11 @@ public class BenchRunner {
       } catch (Exception ee) {
       }
       keepRunning = false;
-      time = System.currentTimeMillis() - time;
       done();
-      stopBarrier.reset();
+      // Grabbing time should be done *after* the done(); so all the workers have finished
+      time = System.currentTimeMillis() - time;
       long o = ops.getAndSet(0);
+      stopBarrier.reset();
       if (g == 0) {
         System.out.print("[1st run-ignore] ");
       }
@@ -128,6 +127,7 @@ public class BenchRunner {
   }
 
   public abstract static class Benchable {
+
     public abstract void bench();
   }
 
