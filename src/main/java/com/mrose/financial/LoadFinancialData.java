@@ -59,7 +59,7 @@ from journals
 where hash in (
   select hash
   from journals
-  where ts >= to_date('2014.02.01', 'YYYY.MM.DD')
+  where ts >= to_date('2015.01.01', 'YYYY.MM.DD')
   group by hash
   having count(1) > 1
 )
@@ -69,8 +69,7 @@ order by hash
 # Look for paying CC bills
 select ts, category, event, amount, acct, desc1, desc2, id
 from journals
-where category is null and
-ts between to_date('2014.04.01', 'YYYY.MM.DD') and to_date('2014.05.01', 'YYYY.MM.DD')
+where category is null
 order by abs(amount) desc
 
 # auto categorize
@@ -78,10 +77,11 @@ update journals set category='CHILDCARE' where category is null and lower(desc1)
 
 update journals set category='BIGBOX' where category is null and lower(desc1) like '%central checkout%';
 
-
 update journals set category='BIGBOX' where category is null and lower(desc1) like 'target%';
 
-update journals set category='MEDICAL' where category is null and lower(desc1) like '%medical%';
+ update journals set category='ENTERTAIN' where category is null and lower(desc1) like 'entertain';
+
+ update journals set category='MEDICAL' where category is null and lower(desc1) like '%medical%';
 
 update journals set category='MEDICAL' where category is null and lower(desc1) like '%swedish%';
 
@@ -90,6 +90,9 @@ update journals set category='MISC' where category is null and lower(desc1) like
 update journals set category='CASH' where category is null and lower(desc1) like '% cash%';
 
 update journals set category='GROCERY' where category is null and lower(desc1) like '% grocery%';
+ update journals set category='GROCERY' where category is null and lower(desc1) like '% mariano';
+ update journals set category='GROCERY' where category is null and lower(desc1) like '% jewel';
+ update journals set category='GROCERY' where category is null and lower(desc1) like '% harvestime';
 
 update journals set category='BIGBOX' where category is null and lower(desc1) like '% bigbox%';
 
@@ -103,10 +106,13 @@ update journals set category='BIGBOX' where category is null and lower(desc1) li
 update journals set category='KIDS' where category is null and lower(desc1) like '% kids';
 update journals set category='CAR' where category is null and lower(desc1) like '% car';
 
+update journals set category='NEW_HOME' where category is null and lower(desc1) like '% new home';
+update journals set category='NEW_HOME' where category is null and lower(desc1) like '% new_home';
+
  # Check on auto-categorize
 select ts, category, event, amount, acct, desc1, desc2, id
 from journals
-where ts >= to_date('2014.10.01', 'YYYY.MM.DD') and category is not null
+where ts >= to_date('2015.01.01', 'YYYY.MM.DD') and category is not null
 order by category
 
  # categorize
@@ -127,12 +133,12 @@ select key from events order by ts
 # review categorization
 select ts, category, acct, amount, desc1, desc2, id
 from journals where
-ts >= to_date('2014.04.01', 'YYYY.MM.DD')
+ts >= to_date('2015.01.01', 'YYYY.MM.DD')
 order by category, ts
 
 # Review Category summary
 select category, count(1), sum(amount)
-from journals where ts between to_date('2014.04.01', 'YYYY.MM.DD') and to_date('2014.06.01', 'YYYY.MM.DD')
+from journals where ts between to_date('2015.01.01', 'YYYY.MM.DD') and to_date('2015.02.01', 'YYYY.MM.DD')
 group by category
 order by sum(amount) desc
 
@@ -146,11 +152,11 @@ order by sum(amount) desc
 # Grand Total
 select sum(amount)
 from journals
-where ts between to_date('2014.04.01', 'YYYY.MM.DD') and to_date('2014.06.01', 'YYYY.MM.DD')
+where ts between to_date('2015.01.01', 'YYYY.MM.DD') and to_date('2015.02.01', 'YYYY.MM.DD')
 
 # To Print
 select ts, category, amount, acct, desc1 from journals where ts between
-to_date('2014.04.01', 'YYYY.MM.DD') and to_date('2014.06.01', 'YYYY.MM.DD') and abs(amount) > 50
+to_date('2015.01.01', 'YYYY.MM.DD') and to_date('2015.02.01', 'YYYY.MM.DD') and abs(amount) > 50
 order by abs(amount) desc
  */
 public class LoadFinancialData {
@@ -163,8 +169,8 @@ public class LoadFinancialData {
   private static final String JDBC_PASS = "mrose";
 
   // readlink -f file
-  private static final String FILE_PATH = "/usr/local/google/home/martinrose/mint.dat";
-  private static final YearMonth LOAD_MONTH = new YearMonth(2014, DateTimeConstants.NOVEMBER);
+  private static final String FILE_PATH = "/usr/local/google/home/martinrose/Desktop/mint.all.csv";
+  private static final YearMonth LOAD_MONTH = new YearMonth(2015, DateTimeConstants.JANUARY);
 
   private static Connection c;
   private static PreparedStatement ps;
@@ -186,6 +192,9 @@ public class LoadFinancialData {
           .readAllLines(new File(FILE_PATH).toPath(), Charset.defaultCharset());
 
       for (String line : linez) {
+        if(StringUtils.isEmpty(line)) {
+          continue;
+        }
         String[] parts = StringUtils.splitPreserveAllTokens(line, '|');
         if (StringUtils.equals(parts[0], "Date")) {
           // HEADER ROW DISCARD
