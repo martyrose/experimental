@@ -74,40 +74,27 @@ order by abs(amount) desc
 
 # auto categorize
 update journals set category='CHILDCARE' where category is null and lower(desc1) like '%childcare%';
-
 update journals set category='BIGBOX' where category is null and lower(desc1) like '%central checkout%';
-
 update journals set category='BIGBOX' where category is null and lower(desc1) like 'target%';
-
- update journals set category='ENTERTAIN' where category is null and lower(desc1) like 'entertain';
-
- update journals set category='MEDICAL' where category is null and lower(desc1) like '%medical%';
-
+update journals set category='ENTERTAIN' where category is null and lower(desc1) like 'entertain';
+update journals set category='MEDICAL' where category is null and lower(desc1) like '%medical%';
 update journals set category='MEDICAL' where category is null and lower(desc1) like '%swedish%';
-
 update journals set category='MISC' where category is null and lower(desc1) like '% misc%';
-
 update journals set category='CASH' where category is null and lower(desc1) like '% cash%';
-
 update journals set category='GROCERY' where category is null and lower(desc1) like '% grocery%';
- update journals set category='GROCERY' where category is null and lower(desc1) like '% mariano';
- update journals set category='GROCERY' where category is null and lower(desc1) like '% jewel';
- update journals set category='GROCERY' where category is null and lower(desc1) like '% harvestime';
-
+update journals set category='GROCERY' where category is null and lower(desc1) like '% mariano';
+update journals set category='GROCERY' where category is null and lower(desc1) like '% jewel';
+update journals set category='GROCERY' where category is null and lower(desc1) like '% harvestime';
 update journals set category='BIGBOX' where category is null and lower(desc1) like '% bigbox%';
-
 update journals set category='GIFT' where category is null and lower(desc1) like '% gift%';
-
 update journals set category='HOMEOP' where category is null and lower(desc1) like '% homeop%';
-
 update journals set category='TRAVEL' where category is null and lower(desc1) like '% travel%';
 update journals set category='BIGBOX' where category is null and lower(desc1) like '%amazon%';
-
 update journals set category='KIDS' where category is null and lower(desc1) like '% kids';
 update journals set category='CAR' where category is null and lower(desc1) like '% car';
-
 update journals set category='NEW_HOME' where category is null and lower(desc1) like '% new home';
 update journals set category='NEW_HOME' where category is null and lower(desc1) like '% new_home';
+update journals set category='ENTERTAIN' where category is null and lower(desc1) like '% entertain%';
 
  # Check on auto-categorize
 select ts, category, event, amount, acct, desc1, desc2, id
@@ -169,8 +156,8 @@ public class LoadFinancialData {
   private static final String JDBC_PASS = "mrose";
 
   // readlink -f file
-  private static final String FILE_PATH = "/usr/local/google/home/martinrose/Desktop/mint.all.csv";
-  private static final YearMonth LOAD_MONTH = new YearMonth(2015, DateTimeConstants.JANUARY);
+  private static final String FILE_PATH = "/usr/local/google/home/martinrose/Desktop/data.dat";
+  private static final YearMonth LOAD_MONTH = new YearMonth(2015, DateTimeConstants.FEBRUARY);
 
   private static Connection c;
   private static PreparedStatement ps;

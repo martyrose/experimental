@@ -28,8 +28,8 @@ public class CategorizationDump {
   private static final String JDBC_USER = "mrose";
   private static final String JDBC_PASS = "mrose";
 
-  private static final YearMonth START_TIME = new YearMonth(2014, DateTimeConstants.JANUARY);
-  private static final YearMonth END_TIME = new YearMonth(2015, DateTimeConstants.JANUARY);
+  private static final YearMonth START_TIME = new YearMonth(2014, DateTimeConstants.MARCH);
+  private static final YearMonth END_TIME = new YearMonth(2015, DateTimeConstants.FEBRUARY);
 
   private static Connection c;
 
