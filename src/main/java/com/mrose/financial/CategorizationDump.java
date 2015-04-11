@@ -23,13 +23,12 @@ import java.util.Map;
 public class CategorizationDump {
   private static final Logger log = LoggerFactory.getLogger(CategorizationDump.class);
 
-  private static final String DB_IP = "192.168.56.101";
-  private static final String JDBC_URL = "jdbc:postgresql://" + DB_IP + ":5432/mrose";
+  private static final String JDBC_URL = "jdbc:postgresql://10.12.17.114:5432/mrose";
   private static final String JDBC_USER = "mrose";
   private static final String JDBC_PASS = "mrose";
 
-  private static final YearMonth START_TIME = new YearMonth(2014, DateTimeConstants.MARCH);
-  private static final YearMonth END_TIME = new YearMonth(2015, DateTimeConstants.FEBRUARY);
+  private static final YearMonth START_TIME = new YearMonth(2015, DateTimeConstants.JANUARY);
+  private static final YearMonth END_TIME = new YearMonth(2015, DateTimeConstants.MARCH);
 
   private static Connection c;
 

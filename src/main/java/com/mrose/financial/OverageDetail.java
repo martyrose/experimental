@@ -33,15 +33,14 @@ import java.util.Map;
 public class OverageDetail {
   private static final Logger log = LoggerFactory.getLogger(OverageDetail.class);
 
-  private static final String DB_IP = "192.168.56.101";
-  private static final String JDBC_URL = "jdbc:postgresql://" + DB_IP + ":5432/mrose";
+  private static final String JDBC_URL = "jdbc:postgresql://10.12.17.114:5432/mrose";
   private static final String JDBC_USER = "mrose";
   private static final String JDBC_PASS = "mrose";
 
-  private static final Integer MONTHS_BACK = 10;
+  private static final Integer MONTHS_BACK = 12;
   private static final Integer MIN_CATEGORY_OVERAGE = -10;
   private static final Integer OVERALL_BIG_EXPENSE = -100;
-  private static final YearMonth END_TIME = new YearMonth(2014, DateTimeConstants.NOVEMBER);
+  private static final YearMonth END_TIME = new YearMonth(2015, DateTimeConstants.MARCH);
 
   private static NumberFormat currencyFormat;
   private static final DateTimeFormatter dtf = DateTimeFormat.forPattern("MM/dd/yyyy");
@@ -89,7 +88,7 @@ public class OverageDetail {
     Map<Category, Integer> lastMonth = getSummaryData(c, start, end);
     List<Pair<Category, Integer>> overCategories = new ArrayList<>();
 
-    int months = Months.monthsBetween(start, end.plusMonths(1)).getMonths();
+    final int months = Months.monthsBetween(start, end.plusMonths(1)).getMonths();
 
     for (Map.Entry<Category, Integer> e : lastMonth.entrySet()) {
       Category cat = e.getKey();
@@ -122,7 +121,7 @@ public class OverageDetail {
     }
 
     // Now sort by those we overspent the most
-    overCategories.sort(Collections.reverseOrder(new Comparator<Pair<Category, Integer>>() {
+    Collections.sort(overCategories, Collections.reverseOrder(new Comparator<Pair<Category, Integer>>() {
       @Override
       public int compare(Pair<Category, Integer> o1, Pair<Category, Integer> o2) {
         int budget1 = o1.getKey().budget() * months;

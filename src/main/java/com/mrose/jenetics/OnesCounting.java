@@ -18,7 +18,7 @@ import org.jenetics.util.Function;
 public class OnesCounting {
   public static void main(String[] args) {
     Factory<Genotype<BitGene>> gtf = Genotype.of(
-        BitChromosome.of(20, 0.15)
+        BitChromosome.of(200, 0.15)
     );
     Function<Genotype<BitGene>, Integer> ff = new OneCounter();
     GeneticAlgorithm<BitGene, Integer> ga =
@@ -39,7 +39,7 @@ public class OnesCounting {
     );
 
     ga.setup();
-    ga.evolve(1000);
+    ga.evolve(10000);
     System.out.println(ga.getBestStatistics());
     System.out.println(ga.getBestPhenotype());
   }

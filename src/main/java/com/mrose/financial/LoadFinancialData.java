@@ -150,14 +150,14 @@ public class LoadFinancialData {
 
   private static final Logger log = LoggerFactory.getLogger(LoadFinancialData.class);
 
-  private static final boolean doCommit = true;
-  private static final String JDBC_URL = "jdbc:postgresql://192.168.56.101:5432/mrose";
+  private static final boolean doCommit = false;
+  private static final String JDBC_URL = "jdbc:postgresql://10.12.17.114:5432/mrose";
   private static final String JDBC_USER = "mrose";
   private static final String JDBC_PASS = "mrose";
 
   // readlink -f file
-  private static final String FILE_PATH = "/usr/local/google/home/martinrose/Desktop/data.dat";
-  private static final YearMonth LOAD_MONTH = new YearMonth(2015, DateTimeConstants.FEBRUARY);
+  private static final String FILE_PATH = "/home/mrose/fin.dat";
+  private static final YearMonth LOAD_MONTH = new YearMonth(2015, DateTimeConstants.MARCH);
 
   private static Connection c;
   private static PreparedStatement ps;
