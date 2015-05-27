@@ -1,34 +1,14 @@
 package com.mrose.prime;
 
-import com.google.common.base.Splitter;
-import com.google.common.io.CharStreams;
+import com.google.common.math.BigIntegerMath;
 
 import com.mrose.math.BigInteger;
 import com.mrose.random.MersenneTwister;
 import com.mrose.util.Log;
 import com.mrose.util.LogFactory;
 
-import org.apache.commons.lang3.tuple.Pair;
-
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
+import java.math.RoundingMode;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 /**
  * http://asecuritysite.com/Encryption/rsa
@@ -41,25 +21,28 @@ public class SemiPrimeFactor {
   public static void main(String[] args) throws Exception {
     byte[] seed = SecureRandom.getSeed(8);
     MersenneTwister twister = new MersenneTwister(toLong(seed));
-    BigInteger prime1 = BigInteger.probablePrime(32, twister);
-    BigInteger prime2 = BigInteger.probablePrime(32, twister);
+    final int BIT_PRIMES = 32;
+    BigInteger prime1 = BigInteger.probablePrime(BIT_PRIMES, twister);
+    BigInteger prime2 = BigInteger.probablePrime(BIT_PRIMES, twister);
     BigInteger modulus = prime1.multiply(prime2);
 
-    log.warn(modulus);
+    BigInteger sqrt = new BigInteger(
+        BigIntegerMath.sqrt(new java.math.BigInteger(modulus.toByteArray()), RoundingMode.CEILING)
+            .toByteArray());
 
-    Set<BigInteger> smallPrimes = readPrimes();
-    List<Pair<BigInteger, BigInteger>> remainders = new ArrayList<>(smallPrimes.size());
-    for(BigInteger prime: smallPrimes) {
-      BigInteger remainder = modulus.remainder(prime);
-      remainders.add(Pair.of(prime, remainder));
-    }
-    Collections.sort(remainders, new Comparator<Pair<BigInteger, BigInteger>>() {
-      @Override
-      public int compare(Pair<BigInteger, BigInteger> o1, Pair<BigInteger, BigInteger> o2) {
-        return o1.getValue().compareTo(o2.getValue());
-      }
-    });
-    log.warn(remainders);
+    log.warn("Prime 1: " + prime1.toString(10));
+    log.warn("Prime 2: " + prime2.toString(10));
+
+    log.warn("Modulus: " + modulus.toString(10));
+    log.warn("SQRT: " + sqrt.toString(10));
+    log.warn("ReMultiply SQRT: " + sqrt.multiply(sqrt).toString(10));
+
+
+
+    log.warn("#### " + modulus.mod(prime1));
+    log.warn("#### " + modulus.mod(prime2));
+    log.warn("#### " + modulus.mod(BigInteger.probablePrime(BIT_PRIMES, twister)));
+
   }
 
   public static long toLong(byte[] data) {
@@ -80,17 +63,4 @@ public class SemiPrimeFactor {
             (long) (0xff & data[7]) << 0);
   }
 
-  public static Set<BigInteger> readPrimes() throws IOException {
-    Set<BigInteger> results = new HashSet<>();
-    try (InputStream is = new FileInputStream("/tmp/primes.txt")) {
-      List<String> linez = CharStreams.readLines(new InputStreamReader(is, StandardCharsets.UTF_8));
-      for(String line: linez) {
-        List<String> values = Splitter.on(' ').omitEmptyStrings().splitToList(line);
-        for(String v: values) {
-          results.add(new BigInteger(v));
-        }
-      }
-      return results;
-    }
-  }
 }
