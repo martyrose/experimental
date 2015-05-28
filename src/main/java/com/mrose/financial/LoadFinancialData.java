@@ -129,6 +129,13 @@ from journals where ts between to_date('2015.01.01', 'YYYY.MM.DD') and to_date('
 group by category
 order by sum(amount) desc
 
+# Income vs expenses
+select category in ('SR_INCOME', 'MR_INCOME'), sum(amount) from journals
+where ts between to_date('2015.04.01', 'YYYY.MM.DD') and to_date('2015.05.01', 'YYYY.MM.DD') and
+category not in ('SAVING', 'NET')
+group by category in ('SR_INCOME', 'MR_INCOME')
+
+
 # Review event summary
 select event, count(1), sum(amount)
 from journals where ts between to_date('2014.01.01', 'YYYY.MM.DD') and to_date('2014.06.01', 'YYYY.MM.DD') and
@@ -139,7 +146,8 @@ order by sum(amount) desc
 # Grand Total
 select sum(amount)
 from journals
-where ts between to_date('2015.01.01', 'YYYY.MM.DD') and to_date('2015.02.01', 'YYYY.MM.DD')
+where category not in ('SAVING', 'NET') and
+ ts between to_date('2015.01.01', 'YYYY.MM.DD') and to_date('2015.02.01', 'YYYY.MM.DD')
 
 # To Print
 select ts, category, amount, acct, desc1 from journals where ts between
@@ -150,14 +158,14 @@ public class LoadFinancialData {
 
   private static final Logger log = LoggerFactory.getLogger(LoadFinancialData.class);
 
-  private static final boolean doCommit = false;
+  private static final boolean doCommit = true;
   private static final String JDBC_URL = "jdbc:postgresql://10.12.17.114:5432/mrose";
   private static final String JDBC_USER = "mrose";
   private static final String JDBC_PASS = "mrose";
 
   // readlink -f file
-  private static final String FILE_PATH = "/home/mrose/fin.dat";
-  private static final YearMonth LOAD_MONTH = new YearMonth(2015, DateTimeConstants.MARCH);
+  private static final String FILE_PATH = "/home/mrose/Downloads/5.dat";
+  private static final YearMonth LOAD_MONTH = new YearMonth(2015, DateTimeConstants.APRIL);
 
   private static Connection c;
   private static PreparedStatement ps;
@@ -208,6 +216,8 @@ public class LoadFinancialData {
         if (r.amount.compareTo(BigDecimal.ZERO) == 0) {
           continue;
         }
+        // log.warn("==> " + line);
+
         addRow(r);
         rowsAdded++;
         total = total.add(r.amount);

@@ -9,6 +9,7 @@ import com.mrose.util.LogFactory;
 
 import java.math.RoundingMode;
 import java.security.SecureRandom;
+import java.util.BitSet;
 
 /**
  * http://asecuritysite.com/Encryption/rsa
@@ -30,14 +31,17 @@ public class SemiPrimeFactor {
         BigIntegerMath.sqrt(new java.math.BigInteger(modulus.toByteArray()), RoundingMode.CEILING)
             .toByteArray());
 
+    BigInteger bi = BigInteger.ONE.add(BigInteger.ONE).pow(BIT_PRIMES-1);
     log.warn("Prime 1: " + prime1.toString(10));
     log.warn("Prime 2: " + prime2.toString(10));
+    log.warn("BS: " + bi.toString(10));
 
     log.warn("Modulus: " + modulus.toString(10));
     log.warn("SQRT: " + sqrt.toString(10));
     log.warn("ReMultiply SQRT: " + sqrt.multiply(sqrt).toString(10));
 
 
+    log.warn("Search_Space: " + sqrt.subtract(bi).toString(10));
 
     log.warn("#### " + modulus.mod(prime1));
     log.warn("#### " + modulus.mod(prime2));
