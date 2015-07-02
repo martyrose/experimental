@@ -1,5 +1,7 @@
 package com.mrose.jenetics;
 
+import com.google.common.collect.Range;
+
 import org.jenetics.BitChromosome;
 import org.jenetics.BitGene;
 import org.jenetics.GeneticAlgorithm;
@@ -17,41 +19,11 @@ import org.jenetics.util.Function;
  */
 public class OnesCounting {
   public static void main(String[] args) {
-    Factory<Genotype<BitGene>> gtf = Genotype.of(
-        BitChromosome.of(200, 0.15)
-    );
-    Function<Genotype<BitGene>, Integer> ff = new OneCounter();
-    GeneticAlgorithm<BitGene, Integer> ga =
-        new GeneticAlgorithm<>(
-            gtf, ff, Optimize.MAXIMUM
-        );
-
-    ga.setStatisticsCalculator(
-        new NumberStatistics.Calculator<BitGene, Integer>()
-    );
-    ga.setPopulationSize(500);
-    ga.setSelectors(
-        new RouletteWheelSelector<BitGene, Integer>()
-    );
-    ga.setAlterers(
-        new Mutator<BitGene>(0.55),
-        new SinglePointCrossover<BitGene>(0.06)
-    );
-
-    ga.setup();
-    ga.evolve(10000);
-    System.out.println(ga.getBestStatistics());
-    System.out.println(ga.getBestPhenotype());
+    Range<Long> r = Range.closed(0L, 0L);
+    long l = r.lowerEndpoint();
+    boolean val = r.contains(l);
+    System.out.println("Contains: " + val);
   }
 
-}
-
-
-final class OneCounter implements Function<Genotype<BitGene>, Integer>
-{
-  @Override
-  public Integer apply(final Genotype<BitGene> genotype) {
-    return ((BitChromosome)genotype.getChromosome()).bitCount();
-  }
 }
 
