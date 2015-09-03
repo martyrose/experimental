@@ -22,137 +22,106 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- drop table journals;
- drop table categories;
- drop table events;
-
- create table journals (
- ts date,
- category text,
- event text,
- desc1 text,
- desc2 text,
- amount numeric(12,2),
- acct text,
- hash text,
- id text primary key
- );
-
- create table categories (
- key text primary key,
- value text,
- budget numeric(12,2)
- );
-
- create table events (
- key text primary key,
- value text,
- ts date
- );
-
- */
-
-/**
-# Find and evaluate duplicates
-select *
-from journals
-where hash in (
-  select hash
-  from journals
-  where ts >= to_date('2015.01.01', 'YYYY.MM.DD')
-  group by hash
-  having count(1) > 1
-)
-order by hash
+ # Find and evaluate duplicates
+ select *
+ from journals
+ where hash in (
+ select hash
+ from journals
+ where ts >= to_date('2015.01.01', 'YYYY.MM.DD')
+ group by hash
+ having count(1) > 1
+ )
+ order by hash
 
 
-# Look for paying CC bills
-select ts, category, event, amount, acct, desc1, desc2, id
-from journals
-where category is null
-order by abs(amount) desc
+ # Look for paying CC bills
+ select ts, category, event, amount, acct, desc1, desc2, id
+ from journals
+ where category is null
+ order by abs(amount) desc
 
-# auto categorize
-update journals set category='CHILDCARE' where category is null and lower(desc1) like '%childcare%';
-update journals set category='BIGBOX' where category is null and lower(desc1) like '%central checkout%';
-update journals set category='BIGBOX' where category is null and lower(desc1) like 'target%';
-update journals set category='ENTERTAIN' where category is null and lower(desc1) like 'entertain';
-update journals set category='MEDICAL' where category is null and lower(desc1) like '%medical%';
-update journals set category='MEDICAL' where category is null and lower(desc1) like '%swedish%';
-update journals set category='MISC' where category is null and lower(desc1) like '% misc%';
-update journals set category='CASH' where category is null and lower(desc1) like '% cash%';
-update journals set category='GROCERY' where category is null and lower(desc1) like '% grocery%';
-update journals set category='GROCERY' where category is null and lower(desc1) like '% mariano';
-update journals set category='GROCERY' where category is null and lower(desc1) like '% jewel';
-update journals set category='GROCERY' where category is null and lower(desc1) like '% harvestime';
-update journals set category='BIGBOX' where category is null and lower(desc1) like '% bigbox%';
-update journals set category='GIFT' where category is null and lower(desc1) like '% gift%';
-update journals set category='HOMEOP' where category is null and lower(desc1) like '% homeop%';
-update journals set category='TRAVEL' where category is null and lower(desc1) like '% travel%';
-update journals set category='BIGBOX' where category is null and lower(desc1) like '%amazon%';
-update journals set category='KIDS' where category is null and lower(desc1) like '% kids';
-update journals set category='CAR' where category is null and lower(desc1) like '% car';
-update journals set category='NEW_HOME' where category is null and lower(desc1) like '% new home';
-update journals set category='NEW_HOME' where category is null and lower(desc1) like '% new_home';
-update journals set category='ENTERTAIN' where category is null and lower(desc1) like '% entertain%';
+ # auto categorize
+ update journals set category='CHILDCARE' where category is null and lower(desc1) like '%childcare%';
+ update journals set category='BIGBOX' where category is null and lower(desc1) like '%central checkout%';
+ update journals set category='BIGBOX' where category is null and lower(desc1) like 'target%';
+ update journals set category='ENTERTAIN' where category is null and lower(desc1) like 'entertain';
+ update journals set category='MEDICAL' where category is null and lower(desc1) like '%medical%';
+ update journals set category='MEDICAL' where category is null and lower(desc1) like '%swedish%';
+ update journals set category='MISC' where category is null and lower(desc1) like '% misc%';
+ update journals set category='CASH' where category is null and lower(desc1) like '% cash%';
+ update journals set category='GROCERY' where category is null and lower(desc1) like '% grocery%';
+ update journals set category='GROCERY' where category is null and lower(desc1) like '% mariano';
+ update journals set category='GROCERY' where category is null and lower(desc1) like '% jewel';
+ update journals set category='GROCERY' where category is null and lower(desc1) like '% harvestime';
+ update journals set category='BIGBOX' where category is null and lower(desc1) like '% bigbox%';
+ update journals set category='GIFT' where category is null and lower(desc1) like '% gift%';
+ update journals set category='HOMEOP' where category is null and lower(desc1) like '% homeop%';
+ update journals set category='TRAVEL' where category is null and lower(desc1) like '% travel%';
+ update journals set category='BIGBOX' where category is null and lower(desc1) like '%amazon%';
+ update journals set category='KIDS' where category is null and lower(desc1) like '% kids';
+ update journals set category='CAR' where category is null and lower(desc1) like '% car';
+ update journals set category='NEW_HOME' where category is null and lower(desc1) like '% new home';
+ update journals set category='NEW_HOME' where category is null and lower(desc1) like '% new_home';
+ update journals set category='ENTERTAIN' where category is null and lower(desc1) like '% entertain%';
 
  # Check on auto-categorize
-select ts, category, event, amount, acct, desc1, desc2, id
-from journals
-where ts >= to_date('2015.01.01', 'YYYY.MM.DD') and category is not null
-order by category
+ select ts, category, event, amount, acct, desc1, desc2, id
+ from journals
+ where ts >= to_date('2015.01.01', 'YYYY.MM.DD') and category is not null
+ order by category
 
  # categorize
-select ts, category, event, amount, acct, desc1, desc2, id
-from journals
-where category is null
-order by lower(desc1), ts
+ select ts, category, event, amount, acct, desc1, desc2, id
+ from journals
+ where category is null
+ order by lower(desc1), ts
 
-# categories not used
-select key from categories except select category from journals where ts >= to_date('2014.04.01', 'YYYY.MM.DD')
+ # categories not used
+ select key from categories except select category from journals where ts >= to_date('2014.04.01', 'YYYY.MM.DD')
 
-# categories not defined
-select category from journals where ts >= to_date('2014.04.01', 'YYYY.MM.DD') except select key from categories
+ # categories not defined
+ select category from journals where ts >= to_date('2014.04.01', 'YYYY.MM.DD') except select key from categories
 
-# event definitions
-select key from events order by ts
+ # event definitions
+ select key from events order by ts
 
-# review categorization
-select ts, category, acct, amount, desc1, desc2, id
-from journals where
-ts >= to_date('2015.01.01', 'YYYY.MM.DD')
-order by category, ts
+ # review categorization
+ select ts, category, acct, amount, desc1, desc2, id
+ from journals where
+ ts >= to_date('2015.01.01', 'YYYY.MM.DD')
+ order by category, ts
 
-# Review Category summary
-select category, count(1), sum(amount)
-from journals where ts between to_date('2015.01.01', 'YYYY.MM.DD') and to_date('2015.02.01', 'YYYY.MM.DD')
-group by category
-order by sum(amount) desc
+ # Review Category summary
+ select category, count(1), sum(amount)
+ from journals where ts between to_date('2015.01.01', 'YYYY.MM.DD') and to_date('2015.02.01', 'YYYY.MM.DD')
+ group by category
+ order by sum(amount) desc
 
-# Income vs expenses
-select category in ('SR_INCOME', 'MR_INCOME') as "is_income", sum(amount) from journals
-where ts between to_date('2015.07.01', 'YYYY.MM.DD') and to_date('2015.08.01', 'YYYY.MM.DD') and
-category not in ('SAVING', 'NET')
-group by category in ('SR_INCOME', 'MR_INCOME')
+ # Income vs expenses
+ select category in ('SR_INCOME', 'MR_INCOME'), sum(amount) from journals
+ where ts between to_date('2015.04.01', 'YYYY.MM.DD') and to_date('2015.05.01', 'YYYY.MM.DD') and
+ category not in ('SAVING', 'NET')
+ group by category in ('SR_INCOME', 'MR_INCOME')
 
 
-# Review event summary
-select event, count(1), sum(amount)
-from journals where ts between to_date('2014.01.01', 'YYYY.MM.DD') and to_date('2014.06.01', 'YYYY.MM.DD') and
-event is not null
-group by event
-order by sum(amount) desc
+ # Review event summary
+ select event, count(1), sum(amount)
+ from journals where ts between to_date('2014.01.01', 'YYYY.MM.DD') and to_date('2014.06.01', 'YYYY.MM.DD') and
+ event is not null
+ group by event
+ order by sum(amount) desc
 
-# Grand Total
-select sum(amount)
-from journals
-where category not in ('SAVING', 'NET') and
+ # Grand Total
+ select sum(amount)
+ from journals
+ where category not in ('SAVING', 'NET') and
  ts between to_date('2015.01.01', 'YYYY.MM.DD') and to_date('2015.02.01', 'YYYY.MM.DD')
 
-# To Print
-select ts, category, amount, acct, desc1 from journals where ts between
-to_date('2015.01.01', 'YYYY.MM.DD') and to_date('2015.02.01', 'YYYY.MM.DD') and abs(amount) > 50
-order by abs(amount) desc
+ # To Print
+ select ts, category, amount, acct, desc1 from journals where ts between
+ to_date('2015.01.01', 'YYYY.MM.DD') and to_date('2015.02.01', 'YYYY.MM.DD') and abs(amount) > 50
+ order by abs(amount) desc
  */
 public class LoadFinancialData {
 
@@ -286,3 +255,34 @@ public class LoadFinancialData {
     }
   }
 }
+
+/**
+ drop table journals;
+ drop table categories;
+ drop table events;
+
+ create table journals (
+ ts date,
+ category text,
+ event text,
+ desc1 text,
+ desc2 text,
+ amount numeric(12,2),
+ acct text,
+ hash text,
+ id text primary key
+ );
+
+ create table categories (
+ key text primary key,
+ value text,
+ budget numeric(12,2)
+ );
+
+ create table events (
+ key text primary key,
+ value text,
+ ts date
+ );
+
+ */
