@@ -130,8 +130,8 @@ group by category
 order by sum(amount) desc
 
 # Income vs expenses
-select category in ('SR_INCOME', 'MR_INCOME'), sum(amount) from journals
-where ts between to_date('2015.04.01', 'YYYY.MM.DD') and to_date('2015.05.01', 'YYYY.MM.DD') and
+select category in ('SR_INCOME', 'MR_INCOME') as "is_income", sum(amount) from journals
+where ts between to_date('2015.07.01', 'YYYY.MM.DD') and to_date('2015.08.01', 'YYYY.MM.DD') and
 category not in ('SAVING', 'NET')
 group by category in ('SR_INCOME', 'MR_INCOME')
 
@@ -159,13 +159,13 @@ public class LoadFinancialData {
   private static final Logger log = LoggerFactory.getLogger(LoadFinancialData.class);
 
   private static final boolean doCommit = true;
-  private static final String JDBC_URL = "jdbc:postgresql://10.12.17.114:5432/mrose";
+  private static final String JDBC_URL = "jdbc:postgresql://10.12.17.124:5432/mrose";
   private static final String JDBC_USER = "mrose";
   private static final String JDBC_PASS = "mrose";
 
   // readlink -f file
-  private static final String FILE_PATH = "/home/mrose/Downloads/5.dat";
-  private static final YearMonth LOAD_MONTH = new YearMonth(2015, DateTimeConstants.APRIL);
+  private static final String FILE_PATH = "/home/mrose/Downloads/3.dat";
+  private static final YearMonth LOAD_MONTH = new YearMonth(2015, DateTimeConstants.AUGUST);
 
   private static Connection c;
   private static PreparedStatement ps;
