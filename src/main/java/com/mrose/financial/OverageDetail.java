@@ -33,14 +33,14 @@ import java.util.Map;
 public class OverageDetail {
   private static final Logger log = LoggerFactory.getLogger(OverageDetail.class);
 
-  private static final String JDBC_URL = "jdbc:postgresql://10.12.17.114:5432/mrose";
+  private static final String JDBC_URL = "jdbc:postgresql://10.12.17.124:5432/mrose";
   private static final String JDBC_USER = "mrose";
   private static final String JDBC_PASS = "mrose";
 
-  private static final Integer MONTHS_BACK = 12;
+  private static final Integer MONTHS_BACK = 1;
   private static final Integer MIN_CATEGORY_OVERAGE = -10;
-  private static final Integer OVERALL_BIG_EXPENSE = -100;
-  private static final YearMonth END_TIME = new YearMonth(2015, DateTimeConstants.MARCH);
+  private static final Integer OVERALL_BIG_EXPENSE = -1000;
+  private static final YearMonth END_TIME = new YearMonth(2015, DateTimeConstants.SEPTEMBER);
 
   private static NumberFormat currencyFormat;
   private static final DateTimeFormatter dtf = DateTimeFormat.forPattern("MM/dd/yyyy");

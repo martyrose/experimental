@@ -9,7 +9,6 @@ import com.mrose.util.LogFactory;
 
 import java.math.RoundingMode;
 import java.security.SecureRandom;
-import java.util.BitSet;
 
 /**
  * http://asecuritysite.com/Encryption/rsa
@@ -22,32 +21,38 @@ public class SemiPrimeFactor {
   public static void main(String[] args) throws Exception {
     byte[] seed = SecureRandom.getSeed(8);
     MersenneTwister twister = new MersenneTwister(toLong(seed));
-    final int BIT_PRIMES = 32;
+    final int BIT_PRIMES = 64;
     BigInteger prime1 = BigInteger.probablePrime(BIT_PRIMES, twister);
     BigInteger prime2 = BigInteger.probablePrime(BIT_PRIMES, twister);
     BigInteger modulus = prime1.multiply(prime2);
 
-    BigInteger sqrt = new BigInteger(
-        BigIntegerMath.sqrt(new java.math.BigInteger(modulus.toByteArray()), RoundingMode.CEILING)
-            .toByteArray());
+    log.warn(prime1);
+    log.warn(prime2);
+    log.warn(modulus);
 
-    BigInteger minValue = BigInteger.ONE.add(BigInteger.ONE).pow(BIT_PRIMES-1);
-    log.warn("Prime 1: " + prime1.toString(10));
-    log.warn("Prime 2: " + prime2.toString(10));
-    log.warn("MinValue"
-        + ": " + minValue.toString(10));
+    // Convert to java.math.BigInteger to call square root helper, add two, then convert back to custom
+    // BigInteger impl
+    BigInteger searchSpot = new BigInteger(BigIntegerMath
+        .sqrt(new java.math.BigInteger(modulus.toString(16), 16), RoundingMode.CEILING).add(
+            java.math.BigInteger.ONE).add(java.math.BigInteger.ONE)
+        .toString(16), 16);
+    BigInteger bestRemainder = searchSpot;
+    BigInteger threshold = new BigInteger("256", 10);
 
-    log.warn("Modulus: " + modulus.toString(10));
-    log.warn("SQRT: " + sqrt.toString(10));
-    log.warn("ReMultiply SQRT: " + sqrt.multiply(sqrt).toString(10));
+    do {
+      searchSpot = searchSpot.subtract(BigInteger.ONE);
+      BigInteger remainder = modulus.mod(searchSpot);
+//    log.warn(modulus + " % " + searchSpot + " == " + remainder);
+//      log.warn("Best Remainder.1: " + bestRemainder);
+      if (remainder.compareTo(bestRemainder) == -1) {
+        System.out.println("New Best Remainder: " + bestRemainder);
+        bestRemainder = remainder;
+      }
+//      log.warn("Best Remainder.2: " + bestRemainder);
 
-
-    log.warn("Search_Space: " + sqrt.subtract(minValue).toString(10));
-
-    log.warn("#### " + modulus.mod(prime1));
-    log.warn("#### " + modulus.mod(prime2));
-    log.warn("#### " + modulus.mod(BigInteger.probablePrime(BIT_PRIMES, twister)));
-
+//      log.warn("Comparison: " + bestRemainder.compareTo(threshold));
+//      Thread.sleep(1000);
+    } while (bestRemainder.compareTo(threshold) == 1);
   }
 
   public static long toLong(byte[] data) {
