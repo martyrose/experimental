@@ -134,7 +134,7 @@ public class LoadFinancialData {
 
   // readlink -f file
   private static final String FILE_PATH = "/home/mrose/Downloads/3.dat";
-  private static final YearMonth LOAD_MONTH = new YearMonth(2015, DateTimeConstants.SEPTEMBER);
+  private static final YearMonth LOAD_MONTH = new YearMonth(2015, DateTimeConstants.OCTOBER);
 
   private static Connection c;
   private static PreparedStatement ps;
