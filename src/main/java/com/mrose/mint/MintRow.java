@@ -3,6 +3,7 @@ package com.mrose.mint;
 
 import com.google.common.base.MoreObjects;
 
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -19,7 +20,6 @@ public class MintRow {
   private String originalDescription;
   private BigDecimal amount;
   private String transactionType;
-  private String category;
   private String accountName;
   private String labels;
   private String notes;
@@ -31,7 +31,7 @@ public class MintRow {
     originalDescription = values[index++];
     amount = new BigDecimal(values[index++]);
     transactionType = values[index++];
-    category = values[index++];
+    String ignore1 = values[index++];
     accountName = values[index++];
     labels = values[index++];
     notes = values[index++];
@@ -66,7 +66,7 @@ public class MintRow {
   }
 
   public String getCategory() {
-    return category;
+    return cleanup(StringUtils.substringAfterLast(getDescription(), "-"));
   }
 
   public String getAccountName() {
@@ -85,8 +85,9 @@ public class MintRow {
   public String toString() {
     return MoreObjects.toStringHelper(this).add("date", date).add("description", description)
         .add("amount", getFinancialAmount()).add("ttype", transactionType).toString();
+  }
 
-
-
+  private static String cleanup(String s) {
+    return StringUtils.upperCase(StringUtils.trimToEmpty(s)).replaceAll("\\s+", "");
   }
 }

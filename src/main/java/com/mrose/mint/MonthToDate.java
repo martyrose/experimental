@@ -21,8 +21,11 @@ import java.io.FileReader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -92,10 +95,31 @@ public class MonthToDate {
       }
     });
 
-    Map<String, Collection<MintRow>> categorize = new HashMap<>();
+    Set<String> categoriesToIgnore = new HashSet<>();
+    // Ignore things that are just shuffling cash around between my accounts
+    categoriesToIgnore.add("NET");
+    categoriesToIgnore.add("PAYCC");
+
+    // Ignore Income
+    categoriesToIgnore.add("MRINCOME");
+    categoriesToIgnore.add("SRINCOME");
+
+    // Ignore Categories that don't make sense on a month to month basis
+    categoriesToIgnore.add("TRAVEL");
+    categoriesToIgnore.add("MORTGAGE");
+
+    mintRows = Iterables.filter(mintRows, new Predicate<MintRow>() {
+      @Override
+      public boolean apply(@Nullable MintRow input) {
+        String category = input.getCategory();
+        return !categoriesToIgnore.contains(category);
+      }
+    });
+
+    Map<Category, Collection<MintRow>> categorize = new HashMap<>();
 
     for (MintRow mr : mintRows) {
-      String category = cleanup(StringUtils.substringAfterLast(mr.getDescription(), "-"));
+      String category = mr.getCategory();
       if (StringUtils.isBlank(category)) {
         // Don't worry about tiny stuff
         if (mr.isDebit() && mr.getFinancialAmount().doubleValue() > -5.00) {
@@ -107,52 +131,42 @@ public class MonthToDate {
           category = "OTHER";
         }
       }
-
-      if (!categorize.containsKey(category)) {
-        categorize.put(category, new ArrayList<>());
+      Category c = Category.valueOf(category);
+      if (c == null) {
+        log.warn("UNKNOWN CATEGORY: " + category);
+        continue;
       }
-      categorize.get(category).add(mr);
+
+      if (!categorize.containsKey(c)) {
+        categorize.put(c, new ArrayList<>());
+      }
+      categorize.get(c).add(mr);
     }
-    // Remove things that are just shuffling cash around between my accounts
-    categorize.remove("NET");
-    categorize.remove("PAYCC");
-
-    // Remove Income
-    categorize.remove("MRINCOME");
-    categorize.remove("SRINCOME");
-
-    // Categories that don't make sense on a month to month basis
-    categorize.remove("TRAVEL");
-    categorize.remove("MORTGAGE");
 
     StringBuilder onTrack = new StringBuilder();
     StringBuilder offTrack = new StringBuilder();
     StringBuilder overTrack = new StringBuilder();
 
-    for (String category : categorize.keySet()) {
-      if (Category.valueOf(category) == null) {
-        throw new IllegalArgumentException("Unknown category type: " + category);
-      }
-
-
-      Category ccc = Category.valueOf(category);
-
+    for (Category category : Category.values()) {
+      Collection<MintRow> mints =
+          categorize.containsKey(category) ? categorize.get(category) : Collections.emptyList();
       // This will be negative
-      BigDecimal monthToDate = sum(categorize.get(category));
+      BigDecimal monthToDate = sum(mints);
       // This will be positive
-      long budgetExpected = (long) (((double) ccc.getAmount()) * percentInMonth);
+      long budgetExpected = (long) (((double) category.getAmount()) * percentInMonth);
 
       // Negative if overspent, positive if money left
-      long remainingMoney = ccc.getAmount() + monthToDate.longValue();
+      long remainingMoney = category.getAmount() + monthToDate.longValue();
       if (remainingMoney < 0) {
-        overTrack.append("OVEROVER: In " + category + " over by " + remainingMoney + " Spent " + monthToDate + " budget " + ccc
-                .getAmount() + "\n");
+        overTrack.append(
+            "OVEROVER: In " + category + " over by " + remainingMoney + " Spent " + monthToDate
+                + " budget " + category.getAmount() + "\n");
       } else {
         long remainingAgainstBudget = budgetExpected + monthToDate.longValue();
         if (remainingAgainstBudget < 0) {
           offTrack.append(
               "NOT ON TRACK: In " + category + " there is " + remainingMoney + " left. Spent "
-                  + monthToDate + " budget " + ccc.getAmount() + "\n");
+                  + monthToDate + " budget " + category.getAmount() + "\n");
           Collection<MintRow> entries = categorize.get(category);
           for (MintRow mr : entries) {
             offTrack.append(
@@ -169,9 +183,6 @@ public class MonthToDate {
     System.out.println(overTrack.toString());
   }
 
-  private static String cleanup(String s) {
-    return StringUtils.upperCase(StringUtils.trimToEmpty(s)).replaceAll("\\s+", "");
-  }
 
   private static BigDecimal sum(Iterable<MintRow> mintRows) {
     BigDecimal sum = BigDecimal.ZERO;
