@@ -2,11 +2,11 @@ package com.mrose.prime;
 
 import com.google.common.math.BigIntegerMath;
 
-import com.mrose.math.BigInteger;
 import com.mrose.random.MersenneTwister;
 import com.mrose.util.Log;
 import com.mrose.util.LogFactory;
 
+import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
 
@@ -21,7 +21,7 @@ public class SemiPrimeFactor {
   public static void main(String[] args) throws Exception {
     byte[] seed = SecureRandom.getSeed(8);
     MersenneTwister twister = new MersenneTwister(toLong(seed));
-    final int BIT_PRIMES = 64;
+    final int BIT_PRIMES = 24;
     BigInteger prime1 = BigInteger.probablePrime(BIT_PRIMES, twister);
     BigInteger prime2 = BigInteger.probablePrime(BIT_PRIMES, twister);
     BigInteger modulus = prime1.multiply(prime2);
@@ -36,22 +36,26 @@ public class SemiPrimeFactor {
         .sqrt(new java.math.BigInteger(modulus.toString(16), 16), RoundingMode.CEILING).add(
             java.math.BigInteger.ONE).add(java.math.BigInteger.ONE)
         .toString(16), 16);
+    searchSpot = prime1.add(new BigInteger("1000"));
     BigInteger bestRemainder = searchSpot;
     BigInteger threshold = new BigInteger("256", 10);
 
     do {
       searchSpot = searchSpot.subtract(BigInteger.ONE);
+      while( !searchSpot.isProbablePrime(5)) {
+        searchSpot = searchSpot.subtract(BigInteger.ONE);
+      }
       BigInteger remainder = modulus.mod(searchSpot);
-//    log.warn(modulus + " % " + searchSpot + " == " + remainder);
-//      log.warn("Best Remainder.1: " + bestRemainder);
-      if (remainder.compareTo(bestRemainder) == -1) {
-        System.out.println("New Best Remainder: " + bestRemainder);
+      log.warn(modulus + " % " + searchSpot + " == " + remainder);
+      log.warn("Best Remainder.1: " + bestRemainder);
+      if (bestRemainder.compareTo(remainder) == 1) {
+        log.warn("New Best Remainder: " + remainder);
         bestRemainder = remainder;
       }
-//      log.warn("Best Remainder.2: " + bestRemainder);
+      log.warn("Best Remainder.2: " + bestRemainder);
 
 //      log.warn("Comparison: " + bestRemainder.compareTo(threshold));
-//      Thread.sleep(1000);
+      Thread.sleep(1000);
     } while (bestRemainder.compareTo(threshold) == 1);
   }
 

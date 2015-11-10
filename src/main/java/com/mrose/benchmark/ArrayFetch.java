@@ -3,6 +3,7 @@ package com.mrose.benchmark;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class ArrayFetch {
 
@@ -14,7 +15,7 @@ public class ArrayFetch {
   private final ArrayList<String> list_3 = new ArrayList<String>();
 
   public static void main(String[] args) {
-    new ArrayFetch().run();
+    System.out.println(String.format("Could not create DAT for user %016x", 123456L));
   }
 
   private void run() {

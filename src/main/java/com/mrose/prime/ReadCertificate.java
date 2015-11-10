@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
@@ -14,7 +15,6 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
-import com.mrose.math.BigInteger;
 
 /**
  * Created with IntelliJ IDEA. User: mrose Date: 2/5/14 Time: 10:34 AM To change this template use
@@ -34,8 +34,8 @@ public class ReadCertificate {
       pubKey.getPublicExponent();
 
       String algo = pubKey.getAlgorithm();
-      com.mrose.math.BigInteger modulus = new com.mrose.math.BigInteger(pubKey.getModulus().toByteArray());
-      com.mrose.math.BigInteger pubExponent = new com.mrose.math.BigInteger(pubKey.getPublicExponent().toByteArray());
+      BigInteger modulus = new BigInteger(pubKey.getModulus().toByteArray());
+      BigInteger pubExponent = new BigInteger(pubKey.getPublicExponent().toByteArray());
 
       log.warn("Algorithm: " + algo);
       log.warn("Modulus: " + modulus.toString());
