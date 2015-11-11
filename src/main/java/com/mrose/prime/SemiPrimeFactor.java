@@ -2,9 +2,11 @@ package com.mrose.prime;
 
 import com.google.common.math.BigIntegerMath;
 
+import com.mrose.financial.LoadFinancialData;
 import com.mrose.random.MersenneTwister;
-import com.mrose.util.Log;
-import com.mrose.util.LogFactory;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
 import java.math.RoundingMode;
@@ -14,9 +16,7 @@ import java.security.SecureRandom;
  * http://asecuritysite.com/Encryption/rsa
  */
 public class SemiPrimeFactor {
-
-  protected static transient Log log = LogFactory.getLog(SemiPrimeFactor.class);
-
+  private static final Logger log = LoggerFactory.getLogger(LoadFinancialData.class);
 
   public static void main(String[] args) throws Exception {
     byte[] seed = SecureRandom.getSeed(8);
@@ -26,9 +26,9 @@ public class SemiPrimeFactor {
     BigInteger prime2 = BigInteger.probablePrime(BIT_PRIMES, twister);
     BigInteger modulus = prime1.multiply(prime2);
 
-    log.warn(prime1);
-    log.warn(prime2);
-    log.warn(modulus);
+    log.warn(prime1.toString());
+    log.warn(prime2.toString());
+    log.warn(modulus.toString());
 
     // Convert to java.math.BigInteger to call square root helper, add two, then convert back to custom
     // BigInteger impl

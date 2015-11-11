@@ -37,7 +37,7 @@ public class MonthToDate {
   private static final Logger log = LoggerFactory.getLogger(LoadFinancialData.class);
 
   // readlink -f file
-  private static final String FILE_PATH = "/tmp/mint.dat";
+  private static final String FILE_PATH = "/tmp/transactions.csv";
   private static final YearMonth LOAD_MONTH = new YearMonth(2015, DateTimeConstants.NOVEMBER);
 
   // 1/04/2012
@@ -116,6 +116,10 @@ public class MonthToDate {
       }
     });
 
+    Set<String> allCategories = new HashSet<>();
+    for(Category x: Category.values()) {
+      allCategories.add(x.name());
+    }
     Map<Category, Collection<MintRow>> categorize = new HashMap<>();
 
     for (MintRow mr : mintRows) {
@@ -131,11 +135,11 @@ public class MonthToDate {
           category = "OTHER";
         }
       }
-      Category c = Category.valueOf(category);
-      if (c == null) {
-        log.warn("UNKNOWN CATEGORY: " + category);
+      if( !allCategories.contains(category)) {
+        log.warn("UNKNOWN CATEGORY: " + category + " Description: " + mr.getDescription());
         continue;
       }
+      Category c = Category.valueOf(category);
 
       if (!categorize.containsKey(c)) {
         categorize.put(c, new ArrayList<>());
@@ -161,20 +165,24 @@ public class MonthToDate {
         overTrack.append(
             "OVEROVER: In " + category + " over by " + remainingMoney + " Spent " + monthToDate
                 + " budget " + category.getAmount() + "\n");
+        for (MintRow mr : categorize.get(category)) {
+          overTrack.append(
+              "\t" + mr.getFinancialAmount() + " : " + dtf.print(mr.getDate()) + " : " + mr
+                  .getDescription() + "\n");
+        }
       } else {
         long remainingAgainstBudget = budgetExpected + monthToDate.longValue();
         if (remainingAgainstBudget < 0) {
           offTrack.append(
               "NOT ON TRACK: In " + category + " there is " + remainingMoney + " left. Spent "
                   + monthToDate + " budget " + category.getAmount() + "\n");
-          Collection<MintRow> entries = categorize.get(category);
-          for (MintRow mr : entries) {
+          for (MintRow mr : categorize.get(category)) {
             offTrack.append(
                 "\t" + mr.getFinancialAmount() + " : " + dtf.print(mr.getDate()) + " : " + mr
                     .getDescription() + "\n");
           }
         } else {
-          onTrack.append("ONTRACK: In " + category + " there is " + remainingMoney + " left.\n");
+          onTrack.append("ONTRACK: In " + category + " there is " + remainingMoney + " of " + category.getAmount() + " left.\n");
         }
       }
     }
