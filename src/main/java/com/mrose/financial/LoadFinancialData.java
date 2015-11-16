@@ -42,6 +42,8 @@ import java.util.UUID;
  order by abs(amount) desc
 
  # auto categorize
+ FIXUP All should end properly now!
+
  update journals set category='CHILDCARE' where category is null and lower(desc1) like '%childcare%';
  update journals set category='BIGBOX' where category is null and lower(desc1) like '%central checkout%';
  update journals set category='BIGBOX' where category is null and lower(desc1) like 'target%';

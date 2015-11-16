@@ -3,6 +3,7 @@ package com.mrose.mint;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Ordering;
 
 import au.com.bytecode.opencsv.CSVReader;
 
@@ -19,6 +20,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileReader;
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,13 +46,24 @@ public class MonthToDate {
   // 1/04/2012
   // http://joda-time.sourceforge.net/apidocs/org/joda/time/format/DateTimeFormat.html
   private static final DateTimeFormatter dtf = DateTimeFormat.forPattern("MM/dd/yyyy");
+  private static final NumberFormat percentFormat = NumberFormat.getPercentInstance();
+  private static final NumberFormat currencyFormat = NumberFormat.getCurrencyInstance();
+
+  static {
+    percentFormat.setMaximumFractionDigits(0);
+    currencyFormat.setMaximumFractionDigits(0);
+
+    String symbol = currencyFormat.getCurrency().getSymbol();
+    ((DecimalFormat)currencyFormat).setNegativePrefix(symbol+"-"); // or "-"+symbol if that's what you need
+    ((DecimalFormat)currencyFormat).setNegativeSuffix("");
+  }
 
   public static void main(String[] args) throws Exception {
     CSVReader reader = new CSVReader(new FileReader(FILE_PATH));
     Iterable<String[]> allRows = reader.readAll();
     double percentInMonth = ((double) DateTime.now().getDayOfMonth()) / 30.0d;
 
-    System.out.println("Percent of Month Complete: " + percentInMonth);
+    System.out.println("Percent of Month Complete: " + percentFormat.format(percentInMonth));
     // Skip the header/prefix row
     allRows = Iterables.filter(allRows, new Predicate<String[]>() {
       @Override
@@ -72,6 +86,15 @@ public class MonthToDate {
         return LOAD_MONTH.toInterval().contains(input.getDate());
       }
     });
+
+    Ordering<MintRow> myOrdering = new Ordering<MintRow>() {
+      @Override
+      public int compare(MintRow left, MintRow right) {
+        return left.getDate().compareTo(right.getDate());
+      }
+    };
+
+    mintRows = myOrdering.immutableSortedCopy(mintRows);
 
     mintRows = Iterables.filter(mintRows, new Predicate<MintRow>() {
       @Override
@@ -104,10 +127,6 @@ public class MonthToDate {
     categoriesToIgnore.add("MRINCOME");
     categoriesToIgnore.add("SRINCOME");
 
-    // Ignore Categories that don't make sense on a month to month basis
-    categoriesToIgnore.add("TRAVEL");
-    categoriesToIgnore.add("MORTGAGE");
-
     mintRows = Iterables.filter(mintRows, new Predicate<MintRow>() {
       @Override
       public boolean apply(@Nullable MintRow input) {
@@ -117,7 +136,7 @@ public class MonthToDate {
     });
 
     Set<String> allCategories = new HashSet<>();
-    for(Category x: Category.values()) {
+    for (Category x : Category.values()) {
       allCategories.add(x.name());
     }
     Map<Category, Collection<MintRow>> categorize = new HashMap<>();
@@ -135,7 +154,7 @@ public class MonthToDate {
           category = "OTHER";
         }
       }
-      if( !allCategories.contains(category)) {
+      if (!allCategories.contains(category)) {
         log.warn("UNKNOWN CATEGORY: " + category + " Description: " + mr.getDescription());
         continue;
       }
@@ -147,6 +166,37 @@ public class MonthToDate {
       categorize.get(c).add(mr);
     }
 
+    {
+      long totalBudget = 0;
+      for (Category c : Category.values()) {
+        totalBudget = totalBudget + c.getAmount();
+      }
+      long expectedBudget = (long) (((double) totalBudget) * percentInMonth);
+      long totalExpenses = 0;
+      for (Collection<MintRow> x : categorize.values()) {
+        totalExpenses = totalExpenses + sum(x).longValue();
+      }
+      totalExpenses = dontGoPositive(totalExpenses);
+      // TODO(martinrose) : how to exclude mortgage from both sides of this
+      long leftOver = expectedBudget + totalExpenses;
+
+      if (leftOver > 0) {
+        System.out.println(
+            "ON TRACK OVERALL: Spent: " + currencyFormat
+                .format(expensesExpressedPositive(totalExpenses)) + " of " + currencyFormat
+                .format(totalBudget) + " with " + currencyFormat.format(leftOver)
+                + " left.");
+      } else {
+        System.out.println(
+            "NOT ON TRACK OVERALL: Spent: " + currencyFormat
+                .format(expensesExpressedPositive(totalExpenses)) + " of " + currencyFormat
+                .format(totalBudget) + " over by "
+                + currencyFormat.format(expensesExpressedPositive(leftOver)));
+      }
+    }
+
+    System.out.println("\n\n");
+
     StringBuilder onTrack = new StringBuilder();
     StringBuilder offTrack = new StringBuilder();
     StringBuilder overTrack = new StringBuilder();
@@ -155,34 +205,36 @@ public class MonthToDate {
       Collection<MintRow> mints =
           categorize.containsKey(category) ? categorize.get(category) : Collections.emptyList();
       // This will be negative
-      BigDecimal monthToDate = sum(mints);
+      long categoryExpenses = dontGoPositive(sum(mints).longValue());
       // This will be positive
       long budgetExpected = (long) (((double) category.getAmount()) * percentInMonth);
 
       // Negative if overspent, positive if money left
-      long remainingMoney = category.getAmount() + monthToDate.longValue();
+      long remainingMoney = category.getAmount() + categoryExpenses;
       if (remainingMoney < 0) {
-        overTrack.append(
-            "OVEROVER: In " + category + " over by " + remainingMoney + " Spent " + monthToDate
-                + " budget " + category.getAmount() + "\n");
+        overTrack.append("OVER BUDGET: ");
+        describeCategoryState(category, categoryExpenses, overTrack);
+        overTrack.append("\n");
         for (MintRow mr : categorize.get(category)) {
-          overTrack.append(
-              "\t" + mr.getFinancialAmount() + " : " + dtf.print(mr.getDate()) + " : " + mr
-                  .getDescription() + "\n");
+          overTrack.append("\t");
+          describeMintRow(mr, overTrack);
+          overTrack.append("\n");
         }
       } else {
-        long remainingAgainstBudget = budgetExpected + monthToDate.longValue();
+        long remainingAgainstBudget = budgetExpected + categoryExpenses;
         if (remainingAgainstBudget < 0) {
-          offTrack.append(
-              "NOT ON TRACK: In " + category + " there is " + remainingMoney + " left. Spent "
-                  + monthToDate + " budget " + category.getAmount() + "\n");
+          offTrack.append("NOT ON TRACK: ");
+          describeCategoryState(category, categoryExpenses, offTrack);
+          offTrack.append("\n");
           for (MintRow mr : categorize.get(category)) {
-            offTrack.append(
-                "\t" + mr.getFinancialAmount() + " : " + dtf.print(mr.getDate()) + " : " + mr
-                    .getDescription() + "\n");
+            offTrack.append("\t");
+            describeMintRow(mr, offTrack);
+            offTrack.append("\n");
           }
         } else {
-          onTrack.append("ONTRACK: In " + category + " there is " + remainingMoney + " of " + category.getAmount() + " left.\n");
+          onTrack.append("ONTRACK: ");
+          describeCategoryState(category, categoryExpenses, onTrack);
+          onTrack.append("\n");
         }
       }
     }
@@ -191,6 +243,33 @@ public class MonthToDate {
     System.out.println(overTrack.toString());
   }
 
+  private static void describeCategoryState(Category c, long actualSpend, StringBuilder sb) {
+    long leftOver = (c.getAmount() + actualSpend);
+    if (leftOver >= 0) {
+      sb.append(
+          "In " + c.name() + " spent " + currencyFormat
+              .format(expensesExpressedPositive(dontGoPositive(actualSpend))) + " of "
+              + currencyFormat.format(c.getAmount())
+              + " with " +
+              currencyFormat.format(leftOver) + " left.");
+    } else {
+      sb.append(
+          "In " + c.name() + " spent " + currencyFormat
+              .format(expensesExpressedPositive(dontGoPositive(actualSpend))) + " budgeted "
+              + currencyFormat.format(c.getAmount()) + " over by " +
+              currencyFormat.format(expensesExpressedPositive(leftOver)));
+    }
+  }
+
+  private static void describeMintRow(MintRow mr, StringBuilder sb) {
+//    if (mr.getFinancialAmount().longValue() > 0) {
+//      sb.append("RETURN ");
+//    }
+    sb.append(
+        currencyFormat.format(mr.getFinancialAmount().longValue()) + " : " + dtf.print(mr.getDate()) + " : " + mr
+            .getDescription());
+
+  }
 
   private static BigDecimal sum(Iterable<MintRow> mintRows) {
     BigDecimal sum = BigDecimal.ZERO;
@@ -199,5 +278,16 @@ public class MonthToDate {
       sum = sum.add(mr.getFinancialAmount());
     }
     return sum;
+  }
+
+  private static long dontGoPositive(long value) {
+    if (value > 0) {
+      return 0;
+    }
+    return value;
+  }
+
+  private static long expensesExpressedPositive(long value) {
+    return value * -1;
   }
 }
