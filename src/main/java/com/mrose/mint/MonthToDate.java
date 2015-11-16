@@ -61,7 +61,7 @@ public class MonthToDate {
   public static void main(String[] args) throws Exception {
     CSVReader reader = new CSVReader(new FileReader(FILE_PATH));
     Iterable<String[]> allRows = reader.readAll();
-    double percentInMonth = ((double) DateTime.now().getDayOfMonth()) / 30.0d;
+    double percentInMonth = ((double) DateTime.now().getDayOfMonth()) / ((double)30);
 
     System.out.println("Percent of Month Complete: " + percentFormat.format(percentInMonth));
     // Skip the header/prefix row
@@ -184,14 +184,12 @@ public class MonthToDate {
         System.out.println(
             "ON TRACK OVERALL: Spent: " + currencyFormat
                 .format(expensesExpressedPositive(totalExpenses)) + " of " + currencyFormat
-                .format(totalBudget) + " with " + currencyFormat.format(leftOver)
-                + " left.");
+                .format(totalBudget));
       } else {
         System.out.println(
             "NOT ON TRACK OVERALL: Spent: " + currencyFormat
                 .format(expensesExpressedPositive(totalExpenses)) + " of " + currencyFormat
-                .format(totalBudget) + " over by "
-                + currencyFormat.format(expensesExpressedPositive(leftOver)));
+                .format(totalBudget));
       }
     }
 
