@@ -65,12 +65,7 @@ public class MonthToDate {
 
     System.out.println("Percent of Month Complete: " + percentFormat.format(percentInMonth));
     // Skip the header/prefix row
-    allRows = Iterables.filter(allRows, new Predicate<String[]>() {
-      @Override
-      public boolean apply(@Nullable String[] input) {
-        return !input[0].equals("Date");
-      }
-    });
+    allRows = Iterables.filter(allRows, new CSVPredicate());
 
     Iterable<MintRow> mintRows = Iterables.transform(allRows, new Function<String[], MintRow>() {
       @Nullable
