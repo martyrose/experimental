@@ -1,9 +1,10 @@
 package com.mrose.mint;
 
 import com.google.common.base.Function;
+import com.google.common.base.Functions;
 import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Ordering;
 
 import au.com.bytecode.opencsv.CSVReader;
 
@@ -26,9 +27,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -54,138 +53,102 @@ public class MonthToDate {
     currencyFormat.setMaximumFractionDigits(0);
 
     String symbol = currencyFormat.getCurrency().getSymbol();
-    ((DecimalFormat)currencyFormat).setNegativePrefix(symbol+"-"); // or "-"+symbol if that's what you need
-    ((DecimalFormat)currencyFormat).setNegativeSuffix("");
+    ((DecimalFormat) currencyFormat)
+        .setNegativePrefix(symbol + "-"); // or "-"+symbol if that's what you need
+    ((DecimalFormat) currencyFormat).setNegativeSuffix("");
+  }
+
+  public static void emitSummary(
+      Map<Category, Collection<MintRow>> data,
+      Iterable<Category> categories,
+      Function<Long, Long> exepectedCalculator,
+      StringBuilder sb) {
+    long totalBudget = 0;
+    for (Category c : categories) {
+      totalBudget = totalBudget + c.getAmount();
+    }
+    long expectedBudget = exepectedCalculator.apply(totalBudget);
+    long totalExpenses = 0;
+    for (Category c : categories) {
+      Collection<MintRow> rows = data.get(c);
+      if (rows != null) {
+        totalExpenses = totalExpenses + sum(rows).longValue();
+      }
+    }
+    totalExpenses = dontGoPositive(totalExpenses);
+    long leftOver = expectedBudget + totalExpenses;
+
+    if (leftOver > 0) {
+      sb.append(
+          "ON TRACK: Spent: "
+              + currencyFormat.format(expensesExpressedPositive(totalExpenses))
+              + " of "
+              + currencyFormat.format(totalBudget)
+              + "\n");
+    } else {
+      System.out.println(
+          "NOT ON TRACK: Spent: "
+              + currencyFormat.format(expensesExpressedPositive(totalExpenses))
+              + " of "
+              + currencyFormat.format(totalBudget)
+              + "\n");
+    }
   }
 
   public static void main(String[] args) throws Exception {
     CSVReader reader = new CSVReader(new FileReader(FILE_PATH));
     Iterable<String[]> allRows = reader.readAll();
-    double percentInMonth = ((double) DateTime.now().getDayOfMonth()) / ((double)30);
+    double percentInMonth = ((double) DateTime.now().getDayOfMonth()) / ((double) 30);
 
     System.out.println("Percent of Month Complete: " + percentFormat.format(percentInMonth));
+
     // Skip the header/prefix row
     allRows = Iterables.filter(allRows, new CSVPredicate());
 
-    Iterable<MintRow> mintRows = Iterables.transform(allRows, new Function<String[], MintRow>() {
-      @Nullable
-      @Override
-      public MintRow apply(@Nullable String[] input) {
-        return new MintRow(input);
-      }
-    });
+    // Convert to MintRows
+    Iterable<MintRow> mintRows = Iterables.transform(allRows, new CSVToMintRowFunction());
+    // Sort them
+    mintRows = new MintRowOrdering().immutableSortedCopy(mintRows);
 
-    mintRows = Iterables.filter(mintRows, new Predicate<MintRow>() {
-      @Override
-      public boolean apply(@Nullable MintRow input) {
-        return LOAD_MONTH.toInterval().contains(input.getDate());
-      }
-    });
+    Predicate<MintRow> filter = new MintRowPredicate(LOAD_MONTH.toInterval());
+    // Filter rows we don't care about
+    mintRows = Iterables.filter(mintRows, filter);
 
-    Ordering<MintRow> myOrdering = new Ordering<MintRow>() {
-      @Override
-      public int compare(MintRow left, MintRow right) {
-        return left.getDate().compareTo(right.getDate());
-      }
-    };
-
-    mintRows = myOrdering.immutableSortedCopy(mintRows);
-
-    mintRows = Iterables.filter(mintRows, new Predicate<MintRow>() {
-      @Override
-      public boolean apply(@Nullable MintRow input) {
-        String account = input.getAccountName();
-        switch (account) {
-          case "Amex":
-          case "Marty Checking":
-          case "BOFA":
-          case "BankOne CC Acct":
-          case "Sally Checking":
-          case "Target Credit Card":
-            return true;
-          case "IGNORE":
-            return false;
-          case "GOOGLE INC. 401(K) SAVINGS PLAN":
-            return false;
-        }
-
-        throw new IllegalArgumentException("Unknown Account: " + account);
-      }
-    });
-
-    Set<String> categoriesToIgnore = new HashSet<>();
-    // Ignore things that are just shuffling cash around between my accounts
-    categoriesToIgnore.add("NET");
-    categoriesToIgnore.add("PAYCC");
-
-    // Ignore Income
-    categoriesToIgnore.add("MRINCOME");
-    categoriesToIgnore.add("SRINCOME");
-
-    mintRows = Iterables.filter(mintRows, new Predicate<MintRow>() {
-      @Override
-      public boolean apply(@Nullable MintRow input) {
-        String category = input.getCategory();
-        return !categoriesToIgnore.contains(category);
-      }
-    });
-
-    Set<String> allCategories = new HashSet<>();
-    for (Category x : Category.values()) {
-      allCategories.add(x.name());
-    }
-    Map<Category, Collection<MintRow>> categorize = new HashMap<>();
-
-    for (MintRow mr : mintRows) {
-      String category = mr.getCategory();
-      if (StringUtils.isBlank(category)) {
-        // Don't worry about tiny stuff
-        if (mr.isDebit() && mr.getFinancialAmount().doubleValue() > -5.00) {
-          continue;
-        } else if (mr.isCredit()) {
-          continue;
-        } else {
-          log.warn("Unable to categorize: " + mr.toString());
-          category = "OTHER";
-        }
-      }
-      if (!allCategories.contains(category)) {
-        log.warn("UNKNOWN CATEGORY: " + category + " Description: " + mr.getDescription());
-        continue;
-      }
-      Category c = Category.valueOf(category);
-
-      if (!categorize.containsKey(c)) {
-        categorize.put(c, new ArrayList<>());
-      }
-      categorize.get(c).add(mr);
-    }
-
+    Map<Category, Collection<MintRow>> categorize = getCategoryCollectionMap(mintRows);
+    System.out.println("Period: " + LOAD_MONTH.toString());
     {
-      long totalBudget = 0;
-      for (Category c : Category.values()) {
-        totalBudget = totalBudget + c.getAmount();
-      }
-      long expectedBudget = (long) (((double) totalBudget) * percentInMonth);
-      long totalExpenses = 0;
-      for (Collection<MintRow> x : categorize.values()) {
-        totalExpenses = totalExpenses + sum(x).longValue();
-      }
-      totalExpenses = dontGoPositive(totalExpenses);
-      // TODO(martinrose) : how to exclude mortgage from both sides of this
-      long leftOver = expectedBudget + totalExpenses;
-
-      if (leftOver > 0) {
-        System.out.println(
-            "ON TRACK OVERALL: Spent: " + currencyFormat
-                .format(expensesExpressedPositive(totalExpenses)) + " of " + currencyFormat
-                .format(totalBudget));
-      } else {
-        System.out.println(
-            "NOT ON TRACK OVERALL: Spent: " + currencyFormat
-                .format(expensesExpressedPositive(totalExpenses)) + " of " + currencyFormat
-                .format(totalBudget));
-      }
+      StringBuilder summary = new StringBuilder();
+      emitSummary(categorize, Category.allExpenses(), Functions.identity(), summary);
+      System.out.println("All Categories");
+      System.out.println("Includes: " + Category.sortByAmount(Category.allExpenses()).toString());
+      System.out.println("Excludes: " + Category.sortByAmount(Category.excludingWhat(Category.allExpenses())).toString());
+      System.out.println(summary.toString());
+    }
+    {
+      StringBuilder summary = new StringBuilder();
+      emitSummary(categorize, Category.allMonthlyExpenses(), Functions.identity(), summary);
+      System.out.println("Only Categories that are consistent month to month");
+      System.out.println("Includes: " + Category.sortByAmount(Category.allMonthlyExpenses()).toString());
+      System.out.println("Excludes: " + Category.sortByAmount(Category.excludingWhat(Category.allMonthlyExpenses())).toString());
+      System.out.println(summary.toString());
+    }
+    {
+      StringBuilder summary = new StringBuilder();
+      emitSummary(
+          categorize,
+          Category.allMonthlySmoothExpenses(),
+          new Function<Long, Long>() {
+            @Nullable
+            @Override
+            public Long apply(@Nullable Long input) {
+              return ((long) (input.doubleValue() * percentInMonth));
+            }
+          },
+          summary);
+      System.out.println("Prorated Smooth Monthly Expenses.");
+      System.out.println("Includes: " + Category.sortByAmount(Category.allMonthlySmoothExpenses()).toString());
+      System.out.println("Excludes: " + Category.sortByAmount(Category.excludingWhat(Category.allMonthlySmoothExpenses())).toString());
+      System.out.println(summary.toString());
     }
 
     System.out.println("\n\n");
@@ -236,32 +199,69 @@ public class MonthToDate {
     System.out.println(overTrack.toString());
   }
 
+  private static Map<Category, Collection<MintRow>> getCategoryCollectionMap(
+      Iterable<MintRow> mintRows) {
+    Map<Category, Collection<MintRow>> categorize = new HashMap<>();
+    for (MintRow mr : mintRows) {
+      String categoryName = mr.getCategory();
+      if (StringUtils.isBlank(categoryName)) {
+        // Don't worry about tiny stuff
+        log.warn("Unable to categorize: " + mr.toString());
+        categoryName = "OTHER";
+      }
+      // This catches if i spell something wrong
+      if (!Category.contains(categoryName)) {
+        log.warn("UNKNOWN CATEGORY: " + categoryName + " Description: " + mr.getDescription());
+        continue;
+      }
+      // Turn it into a category object
+      Category c = Category.valueOf(categoryName);
+
+      if (!categorize.containsKey(c)) {
+        categorize.put(c, new ArrayList<>());
+      }
+      categorize.get(c).add(mr);
+    }
+    categorize.remove(Category.OTHER);
+    return categorize;
+  }
+
   private static void describeCategoryState(Category c, long actualSpend, StringBuilder sb) {
     long leftOver = (c.getAmount() + actualSpend);
     if (leftOver >= 0) {
       sb.append(
-          "In " + c.name() + " spent " + currencyFormat
-              .format(expensesExpressedPositive(dontGoPositive(actualSpend))) + " of "
+          "In "
+              + c.name()
+              + " spent "
+              + currencyFormat.format(expensesExpressedPositive(dontGoPositive(actualSpend)))
+              + " of "
               + currencyFormat.format(c.getAmount())
-              + " with " +
-              currencyFormat.format(leftOver) + " left.");
+              + " with "
+              + currencyFormat.format(leftOver)
+              + " left.");
     } else {
       sb.append(
-          "In " + c.name() + " spent " + currencyFormat
-              .format(expensesExpressedPositive(dontGoPositive(actualSpend))) + " budgeted "
-              + currencyFormat.format(c.getAmount()) + " over by " +
-              currencyFormat.format(expensesExpressedPositive(leftOver)));
+          "In "
+              + c.name()
+              + " spent "
+              + currencyFormat.format(expensesExpressedPositive(dontGoPositive(actualSpend)))
+              + " budgeted "
+              + currencyFormat.format(c.getAmount())
+              + " over by "
+              + currencyFormat.format(expensesExpressedPositive(leftOver)));
     }
   }
 
   private static void describeMintRow(MintRow mr, StringBuilder sb) {
-//    if (mr.getFinancialAmount().longValue() > 0) {
-//      sb.append("RETURN ");
-//    }
+    //    if (mr.getFinancialAmount().longValue() > 0) {
+    //      sb.append("RETURN ");
+    //    }
     sb.append(
-        currencyFormat.format(mr.getFinancialAmount().longValue()) + " : " + dtf.print(mr.getDate()) + " : " + mr
-            .getDescription());
-
+        currencyFormat.format(mr.getFinancialAmount().longValue())
+            + " : "
+            + dtf.print(mr.getDate())
+            + " : "
+            + mr.getDescription());
   }
 
   private static BigDecimal sum(Iterable<MintRow> mintRows) {

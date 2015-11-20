@@ -1,6 +1,5 @@
 package com.mrose.mint;
 
-
 import com.google.common.base.MoreObjects;
 
 import org.apache.commons.lang3.StringUtils;
@@ -15,14 +14,16 @@ import java.math.BigDecimal;
  */
 public class MintRow {
   private static final DateTimeFormatter dtf = DateTimeFormat.forPattern("MM/dd/yyyy");
-  private DateTime date;
-  private String description;
-  private String originalDescription;
-  private BigDecimal amount;
-  private String transactionType;
-  private String accountName;
-  private String labels;
-  private String notes;
+  private final DateTime date;
+  private final String description;
+  private final String originalDescription;
+  private final BigDecimal amount;
+  private final String transactionType;
+  private final String accountName;
+  private final String labels;
+  private final String notes;
+
+  private final String category;
 
   MintRow(String[] values) {
     int index = 0;
@@ -32,9 +33,15 @@ public class MintRow {
     amount = new BigDecimal(values[index++]);
     transactionType = values[index++];
     String ignore1 = values[index++];
-    accountName = values[index++];
+    accountName = cleanup(values[index++]);
     labels = values[index++];
     notes = values[index++];
+
+    category = cleanup(StringUtils.substringAfterLast(getDescription(), "-"));
+  }
+
+  private static String cleanup(String s) {
+    return StringUtils.upperCase(StringUtils.trimToEmpty(s)).replaceAll("\\s+", "");
   }
 
   public boolean isDebit() {
@@ -66,7 +73,7 @@ public class MintRow {
   }
 
   public String getCategory() {
-    return cleanup(StringUtils.substringAfterLast(getDescription(), "-"));
+    return category;
   }
 
   public String getAccountName() {
@@ -83,11 +90,12 @@ public class MintRow {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this).add("date", date).add("description", description)
-        .add("amount", getFinancialAmount()).add("ttype", transactionType).toString();
-  }
-
-  private static String cleanup(String s) {
-    return StringUtils.upperCase(StringUtils.trimToEmpty(s)).replaceAll("\\s+", "");
+    return MoreObjects.toStringHelper(this)
+        .add("date", date)
+        .add("description", description)
+        .add("amount", getFinancialAmount())
+        .add("ttype", transactionType)
+        .add("account", accountName)
+        .toString();
   }
 }
