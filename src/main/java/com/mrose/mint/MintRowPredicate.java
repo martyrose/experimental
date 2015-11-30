@@ -13,7 +13,7 @@ import javax.annotation.Nullable;
  */
 public class MintRowPredicate implements Predicate<MintRow> {
   private final ImmutableSet<String> categoriesToIngore =
-      ImmutableSet.of("NET", "PAYCC", "MRINCOME", "SRINCOME");
+      ImmutableSet.of("NET", "PAYCC");
   private final Predicate<MintRow> predicates;
 
   public MintRowPredicate(Interval dateInterval) {

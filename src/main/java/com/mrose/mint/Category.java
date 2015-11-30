@@ -43,7 +43,9 @@ public enum Category {
   HAIRCUT(60, false, true, false),
   TUITION(300, false, true, false),
   CASH(160, true, true, false),
-  CTA(20, false, true, false);
+  CTA(20, false, true, false),
+  MRINCOME(12000, false, true, true),
+  SRINCOME(0, false, true, true);
 
   private static Supplier<Set<String>> allCategoryNames =
       Suppliers.memoize(
@@ -89,6 +91,17 @@ public enum Category {
           @Override
           public boolean apply(@Nullable Category input) {
             return !input.isIncome;
+          }
+        });
+  }
+
+  public static Set<Category> allIncome() {
+    return Sets.filter(
+        allCategories(),
+        new Predicate<Category>() {
+          @Override
+          public boolean apply(@Nullable Category input) {
+            return input.isIncome;
           }
         });
   }

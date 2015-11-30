@@ -3,7 +3,6 @@ package com.mrose.mint;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 
 import au.com.bytecode.opencsv.CSVReader;
@@ -13,6 +12,7 @@ import com.mrose.financial.LoadFinancialData;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.Days;
 import org.joda.time.YearMonth;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -30,6 +30,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.annotation.Nullable;
+
+// TODO Detail needs to properly take into account all the category properties
+// TODO month detail for NOV when it is a week into december
+// TODO looking past over several months
+// TODO Include income
 
 /**
  * TODO(martinrose) : Add Documentation
@@ -61,13 +66,13 @@ public class MonthToDate {
   public static void emitSummary(
       Map<Category, Collection<MintRow>> data,
       Iterable<Category> categories,
-      Function<Long, Long> exepectedCalculator,
+      Function<Long, Long> expectedCalculator,
       StringBuilder sb) {
     long totalBudget = 0;
     for (Category c : categories) {
       totalBudget = totalBudget + c.getAmount();
     }
-    long expectedBudget = exepectedCalculator.apply(totalBudget);
+    long expectedBudget = expectedCalculator.apply(totalBudget);
     long totalExpenses = 0;
     for (Category c : categories) {
       Collection<MintRow> rows = data.get(c);
@@ -98,9 +103,19 @@ public class MonthToDate {
   public static void main(String[] args) throws Exception {
     CSVReader reader = new CSVReader(new FileReader(FILE_PATH));
     Iterable<String[]> allRows = reader.readAll();
-    double percentInMonth = ((double) DateTime.now().getDayOfMonth()) / ((double) 30);
-
-    System.out.println("Percent of Month Complete: " + percentFormat.format(percentInMonth));
+    double percentInMonth;
+    if (LOAD_MONTH.toInterval().contains(DateTime.now())) {
+      // TODO : Should be using what we have posted transactions through so it lags a few days
+      // ie only throu min_date(uncategorized rows)
+      int numDays =
+          Days.daysBetween(LOAD_MONTH.toInterval().getStart(), LOAD_MONTH.toInterval().getEnd())
+              .getDays();
+      percentInMonth = ((double) DateTime.now().getDayOfMonth()) / ((double) numDays);
+    } else if (LOAD_MONTH.toInterval().isBefore(DateTime.now())) {
+      percentInMonth = 100.0;
+    } else {
+      throw new RuntimeException("LOAD_MONTH is in the future.");
+    }
 
     // Skip the header/prefix row
     allRows = Iterables.filter(allRows, new CSVPredicate());
@@ -115,21 +130,39 @@ public class MonthToDate {
     mintRows = Iterables.filter(mintRows, filter);
 
     Map<Category, Collection<MintRow>> categorize = getCategoryCollectionMap(mintRows);
+    System.out.println("\n");
+    System.out.println("Percent of Month Complete: " + percentFormat.format(percentInMonth));
     System.out.println("Period: " + LOAD_MONTH.toString());
+    {
+      System.out.println("");
+      long totalIncome = sum(categorize.get(Category.MRINCOME)).longValue() + sum(categorize.get(Category.SRINCOME)).longValue();
+      long expectedIncome = Category.MRINCOME.getAmount() + Category.SRINCOME.getAmount();
+      System.out.println("Expected Income: " + currencyFormat.format(expectedIncome));
+      System.out.println("Actual Income: " + currencyFormat.format(totalIncome));
+      double percentageOfExpected = ((double)totalIncome)/((double)expectedIncome);
+      System.out.println("Difference: " + currencyFormat.format(totalIncome - expectedIncome) + " " + percentFormat.format(percentageOfExpected));
+      System.out.println("");
+    }
     {
       StringBuilder summary = new StringBuilder();
       emitSummary(categorize, Category.allExpenses(), Functions.identity(), summary);
-      System.out.println("All Categories");
+      System.out.println("All Expenses");
       System.out.println("Includes: " + Category.sortByAmount(Category.allExpenses()).toString());
-      System.out.println("Excludes: " + Category.sortByAmount(Category.excludingWhat(Category.allExpenses())).toString());
+      System.out.println(
+          "Excludes: "
+              + Category.sortByAmount(Category.excludingWhat(Category.allExpenses())).toString());
       System.out.println(summary.toString());
     }
     {
       StringBuilder summary = new StringBuilder();
       emitSummary(categorize, Category.allMonthlyExpenses(), Functions.identity(), summary);
-      System.out.println("Only Categories that are consistent month to month");
-      System.out.println("Includes: " + Category.sortByAmount(Category.allMonthlyExpenses()).toString());
-      System.out.println("Excludes: " + Category.sortByAmount(Category.excludingWhat(Category.allMonthlyExpenses())).toString());
+      System.out.println("Only expenses that are consistent month to month");
+      System.out.println(
+          "Includes: " + Category.sortByAmount(Category.allMonthlyExpenses()).toString());
+      System.out.println(
+          "Excludes: "
+              + Category.sortByAmount(Category.excludingWhat(Category.allMonthlyExpenses()))
+                  .toString());
       System.out.println(summary.toString());
     }
     {
@@ -145,9 +178,13 @@ public class MonthToDate {
             }
           },
           summary);
-      System.out.println("Prorated Smooth Monthly Expenses.");
-      System.out.println("Includes: " + Category.sortByAmount(Category.allMonthlySmoothExpenses()).toString());
-      System.out.println("Excludes: " + Category.sortByAmount(Category.excludingWhat(Category.allMonthlySmoothExpenses())).toString());
+      System.out.println("Prorated Smooth Monthly Expenses");
+      System.out.println(
+          "Includes: " + Category.sortByAmount(Category.allMonthlySmoothExpenses()).toString());
+      System.out.println(
+          "Excludes: "
+              + Category.sortByAmount(Category.excludingWhat(Category.allMonthlySmoothExpenses()))
+                  .toString());
       System.out.println(summary.toString());
     }
 
@@ -157,7 +194,7 @@ public class MonthToDate {
     StringBuilder offTrack = new StringBuilder();
     StringBuilder overTrack = new StringBuilder();
 
-    for (Category category : Category.values()) {
+    for (Category category : Category.allExpenses()) {
       Collection<MintRow> mints =
           categorize.containsKey(category) ? categorize.get(category) : Collections.emptyList();
       // This will be negative
@@ -206,12 +243,13 @@ public class MonthToDate {
       String categoryName = mr.getCategory();
       if (StringUtils.isBlank(categoryName)) {
         // Don't worry about tiny stuff
-        log.warn("Unable to categorize: " + mr.toString());
+        System.out.println("Unable to categorize: " + mr.toString());
         categoryName = "OTHER";
       }
       // This catches if i spell something wrong
       if (!Category.contains(categoryName)) {
-        log.warn("UNKNOWN CATEGORY: " + categoryName + " Description: " + mr.getDescription());
+        System.out.println(
+            "UNKNOWN CATEGORY: " + categoryName + " Description: " + mr.getDescription());
         continue;
       }
       // Turn it into a category object
@@ -265,6 +303,9 @@ public class MonthToDate {
   }
 
   private static BigDecimal sum(Iterable<MintRow> mintRows) {
+    if( mintRows == null ) {
+      return BigDecimal.ZERO;
+    }
     BigDecimal sum = BigDecimal.ZERO;
 
     for (MintRow mr : mintRows) {
