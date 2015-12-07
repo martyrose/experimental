@@ -21,31 +21,33 @@ import javax.annotation.Nullable;
  * TODO(martinrose) : Add Documentation
  */
 public enum Category {
-  CHARITY(100, false, true, false),
-  TRAVEL(1000, false, false, false),
-  MISC(250, true, true, false),
-  MORTGAGE(3500, false, true, false),
-  SALLYSP(200, true, true, false),
-  GROCERY(1200, true, true, false),
-  KIDS(500, true, true, false),
+  // Income
+  MRINCOME(12165, false, true, true),
+  SRINCOME(0, false, true, true),
+  // Expenses
   BIGBOX(1000, true, true, false),
-  OTHER(0, true, true, false),
-  CAR(300, false, true, false),
-  MARTYSP(150, true, true, false),
-  HOME(50, true, true, false),
-  UTILITY(650, false, true, false),
+  CAR(300, false, false, false),
+  CASH(160, true, true, false),
+  CHARITY(100, false, true, false),
   CHILDCARE(1000, true, true, false),
-  SAVING(200, false, true, false),
+  CTA(20, false, true, false),
   ENTERTAIN(600, true, true, false),
   GIFT(400, false, false, false),
-  MEDICAL(400, false, true, false),
-  INSURANCE(125, false, false, false),
+  GROCERY(1200, true, true, false),
   HAIRCUT(60, false, true, false),
+  HOME(50, true, true, false),
+  INSURANCE(125, false, false, false),
+  KIDS(500, true, true, false),
+  MARTYSP(150, true, true, false),
+  MEDICAL(400, false, true, false),
+  MISC(250, true, true, false),
+  MORTGAGE(3500, false, true, false),
+  OTHER(0, true, true, false),
+  SALLYSP(200, true, true, false),
+  SAVING(200, false, true, false),
+  TRAVEL(1000, false, false, false),
   TUITION(300, false, true, false),
-  CASH(160, true, true, false),
-  CTA(20, false, true, false),
-  MRINCOME(12000, false, true, true),
-  SRINCOME(0, false, true, true);
+  UTILITY(650, false, true, false);
 
   private static Supplier<Set<String>> allCategoryNames =
       Suppliers.memoize(
@@ -128,6 +130,17 @@ public enum Category {
         });
   }
 
+  public static Set<Category> allMultiMonthExpenses() {
+    return Sets.filter(
+        allCategories(),
+        new Predicate<Category>() {
+          @Override
+          public boolean apply(@Nullable Category input) {
+            return !input.isIncome && !input.isMonthBased;
+          }
+        });
+  }
+
   public static Set<Category> excludingWhat(Set<Category> c) {
     return Sets.filter(
         allExpenses(),
@@ -144,7 +157,11 @@ public enum Category {
   }
 
   public long getAmount() {
-    return amount;
+    return getAmount(1);
+  }
+
+  public long getAmount(int months) {
+    return amount * months;
   }
 
   static class BudgetValueOrdering extends Ordering<Category> {

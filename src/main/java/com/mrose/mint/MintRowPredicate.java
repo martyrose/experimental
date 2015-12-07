@@ -5,6 +5,7 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableSet;
 
 import org.joda.time.Interval;
+import org.joda.time.ReadableInterval;
 
 import javax.annotation.Nullable;
 
@@ -16,7 +17,7 @@ public class MintRowPredicate implements Predicate<MintRow> {
       ImmutableSet.of("NET", "PAYCC");
   private final Predicate<MintRow> predicates;
 
-  public MintRowPredicate(Interval dateInterval) {
+  public MintRowPredicate(ReadableInterval dateInterval) {
     this.predicates =
         Predicates.and(
             new DateRangePredicate(dateInterval),
@@ -31,9 +32,9 @@ public class MintRowPredicate implements Predicate<MintRow> {
 
   static class DateRangePredicate implements Predicate<MintRow> {
 
-    private final Interval relevantInterval;
+    private final ReadableInterval relevantInterval;
 
-    public DateRangePredicate(Interval relevantInterval) {
+    public DateRangePredicate(ReadableInterval relevantInterval) {
       this.relevantInterval = relevantInterval;
     }
 
