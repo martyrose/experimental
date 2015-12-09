@@ -137,7 +137,7 @@ public class MonthToDate {
     Iterable<MintRow> filteredMintRows =
         Iterables.filter(nonFilteredMintRows, new MintRowPredicate(PRIMARY_PERIOD));
 
-    Map<Category, Collection<MintRow>> categorize = getCategoryCollectionMap(filteredMintRows);
+    Map<Category, Collection<MintRow>> categorize = getCategoryCollectionMap(filteredMintRows, true);
     System.out.println("\n");
     System.out.println("Percent of Month Complete: " + percentFormat.format(percentInMonth));
     System.out.println(
@@ -150,7 +150,8 @@ public class MonthToDate {
       long totalIncome =
           sum(categorize.get(Category.MRINCOME)).longValue()
               + sum(categorize.get(Category.SRINCOME)).longValue();
-      long expectedIncome = Category.MRINCOME.getAmount(PRIMARY_PERIOD.getMonths()) + Category.SRINCOME.getAmount();
+      long expectedIncome =
+          Category.MRINCOME.getAmount(PRIMARY_PERIOD.getMonths()) + Category.SRINCOME.getAmount();
       System.out.println("Expected Income: " + currencyFormat.format(expectedIncome));
       System.out.println("Actual Income: " + currencyFormat.format(totalIncome));
       double percentageOfExpected = ((double) totalIncome) / ((double) expectedIncome);
@@ -163,7 +164,8 @@ public class MonthToDate {
     }
     {
       StringBuilder summary = new StringBuilder();
-      emitSummary(categorize, Category.allExpenses(), PRIMARY_PERIOD, Functions.identity(), summary);
+      emitSummary(
+          categorize, Category.allExpenses(), PRIMARY_PERIOD, Functions.identity(), summary);
       System.out.println("All Expenses");
       System.out.println("Includes: " + Category.sortByAmount(Category.allExpenses()).toString());
       System.out.println(
@@ -173,7 +175,8 @@ public class MonthToDate {
     }
     {
       StringBuilder summary = new StringBuilder();
-      emitSummary(categorize, Category.allMonthlyExpenses(), PRIMARY_PERIOD, Functions.identity(), summary);
+      emitSummary(
+          categorize, Category.allMonthlyExpenses(), PRIMARY_PERIOD, Functions.identity(), summary);
       System.out.println("Only expenses that are consistent month to month");
       System.out.println(
           "Includes: " + Category.sortByAmount(Category.allMonthlyExpenses()).toString());
@@ -187,7 +190,8 @@ public class MonthToDate {
       StringBuilder summary = new StringBuilder();
       emitSummary(
           categorize,
-          Category.allMonthlySmoothExpenses(),PRIMARY_PERIOD,
+          Category.allMonthlySmoothExpenses(),
+          PRIMARY_PERIOD,
           new PartialMonthFunction(percentInMonth),
           summary);
       System.out.println("Prorated Smooth Monthly Expenses");
@@ -202,14 +206,26 @@ public class MonthToDate {
 
     System.out.println("\n\n");
 
+    System.out.println("=============================");
+    System.out.println("Multi Month All Category Details:");
+    byCategoryDetails(
+        Functions.identity(),
+        EXTENDED_PERIOD,
+        Category.sortByAmount(Category.allExpenses()),
+        nonFilteredMintRows);
+
+    System.out.println("=============================");
+    System.out.println("Monthly Smooth Category Details:");
     byCategoryDetails(
         new PartialMonthFunction(percentInMonth),
         PRIMARY_PERIOD,
         Category.sortByAmount(Category.allMonthlySmoothExpenses()),
         nonFilteredMintRows);
 
+    System.out.println("=============================");
+    System.out.println("Multi Month Category Details:");
     byCategoryDetails(
-        new PartialMonthFunction(percentInMonth),
+        Functions.identity(),
         EXTENDED_PERIOD,
         Category.sortByAmount(Category.allMultiMonthExpenses()),
         nonFilteredMintRows);
@@ -224,21 +240,18 @@ public class MonthToDate {
     StringBuilder offTrack = new StringBuilder();
     StringBuilder overTrack = new StringBuilder();
 
-    System.out.println("Category Details:");
     System.out.println(
-        "Period: "
-            + dtf.print(period.getStart())
-            + " - "
-            + dtf.print(period.getEnd()));
+        "Period: " + dtf.print(period.getStart()) + " - " + dtf.print(period.getEnd()));
     System.out.println("Includes: " + Category.sortByAmount(categories).toString());
     System.out.println(
         "Excludes: " + Category.sortByAmount(Category.excludingWhat(categories)).toString());
+    System.out.println();
 
     // Filter rows we don't care about
     Iterable<MintRow> filteredMintRows =
         Iterables.filter(allMintRows, new MintRowPredicate(period));
 
-    Map<Category, Collection<MintRow>> categorize = getCategoryCollectionMap(filteredMintRows);
+    Map<Category, Collection<MintRow>> categorize = getCategoryCollectionMap(filteredMintRows, false);
 
     for (Category category : categories) {
       Collection<MintRow> mints =
@@ -252,7 +265,8 @@ public class MonthToDate {
       long remainingMoney = category.getAmount(period.getMonths()) + categoryExpenses;
       if (remainingMoney < 0) {
         double percentOver =
-            ((double) categoryExpenses) / ((double) category.getAmount(period.getMonths()) * -1.0) - 1.0;
+            ((double) categoryExpenses) / ((double) category.getAmount(period.getMonths()) * -1.0)
+                - 1.0;
         boolean closeEnough = percentOver < .05;
         if (closeEnough) {
           offTrack.append("CLOSE ENOUGH: ");
@@ -292,19 +306,21 @@ public class MonthToDate {
   }
 
   private static Map<Category, Collection<MintRow>> getCategoryCollectionMap(
-      Iterable<MintRow> mintRows) {
+      Iterable<MintRow> mintRows, boolean doLog) {
     Map<Category, Collection<MintRow>> categorize = new HashMap<>();
     for (MintRow mr : mintRows) {
       String categoryName = mr.getCategory();
       if (StringUtils.isBlank(categoryName)) {
-        // Don't worry about tiny stuff
-        System.out.println("Unable to categorize: " + mr.toString());
+        if( doLog ) {
+          System.out.println("Unable to categorize: " + mr.toString());
+        }
         categoryName = "OTHER";
       }
       // This catches if i spell something wrong
       if (!Category.contains(categoryName)) {
-        System.out.println(
-            "UNKNOWN CATEGORY: " + categoryName + " Description: " + mr.getDescription());
+        if(doLog) {
+          System.out.println("UNKNOWN CATEGORY: " + categoryName + " Description: " + mr.getDescription());
+        }
         continue;
       }
       // Turn it into a category object
@@ -319,7 +335,8 @@ public class MonthToDate {
     return categorize;
   }
 
-  private static void describeCategoryState(Category c, FinancialPeriod period, long actualSpend, StringBuilder sb) {
+  private static void describeCategoryState(
+      Category c, FinancialPeriod period, long actualSpend, StringBuilder sb) {
     long leftOver = (c.getAmount(period.getMonths()) + actualSpend);
     if (leftOver >= 0) {
       sb.append(
