@@ -91,7 +91,7 @@ public class MintRow {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
-        .add("date", date)
+        .add("date", dtf.print(date))
         .add("description", description)
         .add("amount", getFinancialAmount())
         .add("ttype", transactionType)
