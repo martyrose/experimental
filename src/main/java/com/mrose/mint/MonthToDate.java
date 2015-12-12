@@ -115,7 +115,9 @@ public class MonthToDate {
     mintRows = Iterables.filter(mintRows, filter);
 
     Map<Category, Collection<MintRow>> categorize = getCategoryCollectionMap(mintRows);
-    System.out.println("Period: " + LOAD_MONTH.toString());
+    LOAD_MONTH.toInterval().getStart();
+    LOAD_MONTH.toInterval().getEnd();
+    System.out.println("Period: " + dtf.print(LOAD_MONTH.toInterval().getStart()) + "-" + dtf.print(LOAD_MONTH.toInterval().getEnd().minusSeconds(1)));
     {
       StringBuilder summary = new StringBuilder();
       emitSummary(categorize, Category.allExpenses(), Functions.identity(), summary);

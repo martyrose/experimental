@@ -67,11 +67,11 @@ public enum Category {
   private boolean isIncome;
   private long amount;
 
-  Category(long amount, boolean isMonthlySmooth, boolean isMonthBased, boolean isIncome) {
+  Category(long monthlyAmount, boolean isMonthlySmooth, boolean isMonthBased, boolean isIncome) {
     this.isMonthlySmooth = isMonthlySmooth;
     this.isMonthBased = isMonthBased;
     this.isIncome = isIncome;
-    this.amount = amount;
+    this.amount = monthlyAmount;
   }
 
   public static boolean contains(String n) {
