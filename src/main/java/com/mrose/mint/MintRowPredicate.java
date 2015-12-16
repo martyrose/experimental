@@ -55,6 +55,7 @@ public class MintRowPredicate implements Predicate<MintRow> {
         case "BOFA":
         case "BANKONECCACCT":
         case "SALLYCHECKING":
+        case "FAMILYSAVINGS":
         case "TARGETCREDITCARD":
           return true;
         case "IGNORE":

@@ -42,30 +42,35 @@ import java.util.UUID;
  order by abs(amount) desc
 
  # auto categorize
- FIXUP All should end properly now!
+ delete from journals where category is null and acct='IGNORE'
+ delete from journals where category is null and desc1 like '% - NET'
 
- update journals set category='CHILDCARE' where category is null and lower(desc1) like '%childcare%';
- update journals set category='BIGBOX' where category is null and lower(desc1) like '%central checkout%';
- update journals set category='BIGBOX' where category is null and lower(desc1) like 'target%';
- update journals set category='ENTERTAIN' where category is null and lower(desc1) like 'entertain';
- update journals set category='MEDICAL' where category is null and lower(desc1) like '%medical%';
- update journals set category='MEDICAL' where category is null and lower(desc1) like '%swedish%';
- update journals set category='MISC' where category is null and lower(desc1) like '% misc%';
- update journals set category='CASH' where category is null and lower(desc1) like '% cash%';
- update journals set category='GROCERY' where category is null and lower(desc1) like '% grocery%';
- update journals set category='GROCERY' where category is null and lower(desc1) like '% mariano';
- update journals set category='GROCERY' where category is null and lower(desc1) like '% jewel';
- update journals set category='GROCERY' where category is null and lower(desc1) like '% harvestime';
- update journals set category='BIGBOX' where category is null and lower(desc1) like '% bigbox%';
- update journals set category='GIFT' where category is null and lower(desc1) like '% gift%';
- update journals set category='HOMEOP' where category is null and lower(desc1) like '% homeop%';
- update journals set category='TRAVEL' where category is null and lower(desc1) like '% travel%';
- update journals set category='BIGBOX' where category is null and lower(desc1) like '%amazon%';
- update journals set category='KIDS' where category is null and lower(desc1) like '% kids';
- update journals set category='CAR' where category is null and lower(desc1) like '% car';
- update journals set category='NEW_HOME' where category is null and lower(desc1) like '% new home';
- update journals set category='NEW_HOME' where category is null and lower(desc1) like '% new_home';
- update journals set category='ENTERTAIN' where category is null and lower(desc1) like '% entertain%';
+ update journals set category='MR_INCOME' where category is null and lower(desc1) like '%- mrincome';
+ update journals set category='SR_INCOME' where category is null and lower(desc1) like '%- srincome';
+ update journals set category='BIGBOX' where category is null and lower(desc1) like '%- bigbox';
+ update journals set category='CAR' where category is null and lower(desc1) like '%- car';
+ update journals set category='CASH' where category is null and lower(desc1) like '%- cash';
+ update journals set category='CHARITY' where category is null and lower(desc1) like '%- charity';
+ update journals set category='CHILDCARE' where category is null and lower(desc1) like '%- childcare';
+ update journals set category='CTA' where category is null and lower(desc1) like '%- cta';
+ update journals set category='ENTERTAIN' where category is null and lower(desc1) like '%- entertain';
+ update journals set category='GIFT' where category is null and lower(desc1) like '%- gift';
+ update journals set category='GROCERY' where category is null and lower(desc1) like '%- grocery';
+ update journals set category='HAIRCUT' where category is null and lower(desc1) like '%- haircut';
+ update journals set category='HOMEOP' where category is null and lower(desc1) like '%- home';
+ update journals set category='INSURANCE' where category is null and lower(desc1) like '%- insurance';
+ update journals set category='KIDS' where category is null and lower(desc1) like '%- kids';
+ update journals set category='MARTYSP' where category is null and lower(desc1) like '%- martysp';
+ update journals set category='MEDICAL' where category is null and lower(desc1) like '%- medical';
+ update journals set category='MISC' where category is null and lower(desc1) like '%- misc';
+ update journals set category='MORTGAGE' where category is null and lower(desc1) like '%- mortgage';
+ update journals set category=null where category is null and lower(desc1) like '%- other';
+ update journals set category='SALLYSP' where category is null and lower(desc1) like '%- sallysp';
+ update journals set category='SAVING' where category is null and lower(desc1) like '%- saving';
+ update journals set category='TRAVEL' where category is null and lower(desc1) like '%- travel';
+ update journals set category='TUITION' where category is null and lower(desc1) like '%- tuition';
+ update journals set category='HOMEOP' where category is null and lower(desc1) like '%- utility';
+
 
  # Check on auto-categorize
  select ts, category, event, amount, acct, desc1, desc2, id
@@ -136,7 +141,7 @@ public class LoadFinancialData {
 
   // readlink -f file
   private static final String FILE_PATH = "/home/mrose/Downloads/3.dat";
-  private static final YearMonth LOAD_MONTH = new YearMonth(2015, DateTimeConstants.OCTOBER);
+  private static final YearMonth LOAD_MONTH = new YearMonth(2015, DateTimeConstants.NOVEMBER);
 
   private static Connection c;
   private static PreparedStatement ps;

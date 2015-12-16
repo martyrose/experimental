@@ -206,6 +206,13 @@ public class MonthToDate {
     }
 
     System.out.println("\n\n");
+    System.out.println("=============================");
+    System.out.println("Single Month All Category Details:");
+    byCategoryDetails(
+        new PartialMonthFunction(percentInMonth),
+        PRIMARY_PERIOD,
+        Category.sortByAmount(Category.allExpenses()),
+        nonFilteredMintRows);
 
     System.out.println("=============================");
     System.out.println("Multi Month All Category Details:");
