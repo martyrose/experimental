@@ -187,24 +187,7 @@ public class MonthToDate {
                   .toString());
       System.out.println(summary.toString());
     }
-    {
-      StringBuilder summary = new StringBuilder();
-      emitSummary(
-          categorize,
-          Category.allMonthlySmoothExpenses(),
-          PRIMARY_PERIOD,
-          new PartialMonthFunction(percentInMonth),
-          summary);
-      System.out.println("Prorated Smooth Monthly Expenses");
-      System.out.println(
-          "Includes: " + Category.sortByAmount(Category.allMonthlySmoothExpenses()).toString());
-      System.out.println(
-          "Excludes: "
-              + Category.sortByAmount(Category.excludingWhat(Category.allMonthlySmoothExpenses()))
-                  .toString());
-      System.out.println(summary.toString());
-    }
-
+    
     System.out.println("\n\n");
     System.out.println("=============================");
     System.out.println("Single Month All Category Details:");
