@@ -69,6 +69,7 @@ import java.util.UUID;
  update journals set category='SAVING' where category is null and lower(desc1) like '%- saving';
  update journals set category='TRAVEL' where category is null and lower(desc1) like '%- travel';
  update journals set category='TUITION' where category is null and lower(desc1) like '%- tuition';
+  // TODO FIXME
  update journals set category='HOMEOP' where category is null and lower(desc1) like '%- utility';
 
 
@@ -140,8 +141,8 @@ public class LoadFinancialData {
   private static final String JDBC_PASS = "mrose";
 
   // readlink -f file
-  private static final String FILE_PATH = "/home/mrose/Downloads/3.dat";
-  private static final YearMonth LOAD_MONTH = new YearMonth(2015, DateTimeConstants.NOVEMBER);
+  private static final String FILE_PATH = "/tmp/mint.dat";
+  private static final YearMonth LOAD_MONTH = new YearMonth(2015, DateTimeConstants.DECEMBER);
 
   private static Connection c;
   private static PreparedStatement ps;
