@@ -32,6 +32,8 @@ import java.util.Set;
 
 // TODO Detail needs to properly take into account all the category properties
 // TODO month detail for NOV when it is a week into december
+// TODO monthly summary like at start
+// TODO better descriptions in detail
 // TODO looking past over several months
 // TODO Include income
 
@@ -133,61 +135,16 @@ public class MonthToDate {
     // Sort them
     nonFilteredMintRows = new MintRowOrdering().immutableSortedCopy(nonFilteredMintRows);
 
-    // Filter rows we don't care about
-    Iterable<MintRow> filteredMintRows =
-        Iterables.filter(nonFilteredMintRows, new MintRowPredicate(PRIMARY_PERIOD));
 
-
-    Map<Category, Collection<MintRow>> categorize = getCategoryCollectionMap(filteredMintRows, true);
     System.out.println("\n");
     System.out.println("Percent of Month Complete: " + percentFormat.format(percentInMonth));
-    System.out.println(
-        "Period: "
-            + dtf.print(PRIMARY_PERIOD.getStart())
-            + " - "
-            + dtf.print(PRIMARY_PERIOD.getEnd()));
-    {
-      System.out.println("");
-      long totalIncome =
-          sum(categorize.get(Category.MRINCOME)).longValue()
-              + sum(categorize.get(Category.SRINCOME)).longValue();
-      long expectedIncome =
-          Category.MRINCOME.getAmount(PRIMARY_PERIOD.getMonths()) + Category.SRINCOME.getAmount();
-      System.out.println("Expected Income: " + currencyFormat.format(expectedIncome));
-      System.out.println("Actual Income: " + currencyFormat.format(totalIncome));
-      double percentageOfExpected = ((double) totalIncome) / ((double) expectedIncome);
-      System.out.println(
-          "Difference: "
-              + currencyFormat.format(totalIncome - expectedIncome)
-              + " "
-              + percentFormat.format(percentageOfExpected));
-      System.out.println("");
-    }
-    {
-      StringBuilder summary = new StringBuilder();
-      emitSummary(
-          categorize, Category.allExpenses(), PRIMARY_PERIOD, Functions.identity(), summary);
-      System.out.println("All Expenses");
-      System.out.println("Includes: " + Category.sortByAmount(Category.allExpenses()).toString());
-      System.out.println(
-          "Excludes: "
-              + Category.sortByAmount(Category.excludingWhat(Category.allExpenses())).toString());
-      System.out.println(summary.toString());
-    }
-    {
-      StringBuilder summary = new StringBuilder();
-      emitSummary(
-          categorize, Category.allMonthlyExpenses(), PRIMARY_PERIOD, Functions.identity(), summary);
-      System.out.println("Only expenses that are consistent month to month");
-      System.out.println(
-          "Includes: " + Category.sortByAmount(Category.allMonthlyExpenses()).toString());
-      System.out.println(
-          "Excludes: "
-              + Category.sortByAmount(Category.excludingWhat(Category.allMonthlyExpenses()))
-                  .toString());
-      System.out.println(summary.toString());
-    }
-    
+    printSummaryRows(nonFilteredMintRows, PRIMARY_PERIOD);
+
+    System.out.println("\n\n");
+    System.out.println("\n\n");
+    printSummaryRows(nonFilteredMintRows, EXTENDED_PERIOD);
+
+
     System.out.println("\n\n");
     System.out.println("=============================");
     System.out.println("Single Month All Category Details:");
@@ -206,7 +163,7 @@ public class MonthToDate {
         nonFilteredMintRows);
 
     System.out.println("=============================");
-    System.out.println("Monthly Smooth Category Details:");
+    System.out.println("Single Month Smooth Category Details:");
     byCategoryDetails(
         new PartialMonthFunction(percentInMonth),
         PRIMARY_PERIOD,
@@ -220,6 +177,63 @@ public class MonthToDate {
         EXTENDED_PERIOD,
         Category.sortByAmount(Category.allMultiMonthExpenses()),
         nonFilteredMintRows);
+  }
+
+  private static void printSummaryRows(Iterable<MintRow> nonFilteredMintRows, FinancialPeriod timePeriod) {
+    // Filter rows we don't care about
+    Iterable<MintRow> filteredMintRows =
+        Iterables.filter(nonFilteredMintRows, new MintRowPredicate(timePeriod));
+
+    Map<Category, Collection<MintRow>> categorize = getCategoryCollectionMap(filteredMintRows, true);
+
+    System.out.println("\n");
+    System.out.println(
+        "Period: "
+            + dtf.print(timePeriod.getStart())
+            + " - "
+            + dtf.print(timePeriod.getEnd()));
+
+    {
+      System.out.println("");
+      long totalIncome =
+          sum(categorize.get(Category.MRINCOME)).longValue()
+              + sum(categorize.get(Category.SRINCOME)).longValue();
+      long expectedIncome =
+          Category.MRINCOME.getAmount(timePeriod.getMonths()) + Category.SRINCOME.getAmount();
+      System.out.println("Expected Income: " + currencyFormat.format(expectedIncome));
+      System.out.println("Actual Income: " + currencyFormat.format(totalIncome));
+      double percentageOfExpected = ((double) totalIncome) / ((double) expectedIncome);
+      System.out.println(
+          "Difference: "
+              + currencyFormat.format(totalIncome - expectedIncome)
+              + " "
+              + percentFormat.format(percentageOfExpected));
+      System.out.println("");
+    }
+    {
+      StringBuilder summary = new StringBuilder();
+      emitSummary(
+          categorize, Category.allExpenses(), timePeriod, Functions.identity(), summary);
+      System.out.println("All Expenses");
+      System.out.println("Includes: " + Category.sortByAmount(Category.allExpenses()).toString());
+      System.out.println(
+          "Excludes: "
+              + Category.sortByAmount(Category.excludingWhat(Category.allExpenses())).toString());
+      System.out.println(summary.toString());
+    }
+    {
+      StringBuilder summary = new StringBuilder();
+      emitSummary(
+          categorize, Category.allMonthlyExpenses(), timePeriod, Functions.identity(), summary);
+      System.out.println("Only expenses that are consistent month to month");
+      System.out.println(
+          "Includes: " + Category.sortByAmount(Category.allMonthlyExpenses()).toString());
+      System.out.println(
+          "Excludes: "
+              + Category.sortByAmount(Category.excludingWhat(Category.allMonthlyExpenses()))
+              .toString());
+      System.out.println(summary.toString());
+    }
   }
 
   private static void byCategoryDetails(
