@@ -22,32 +22,32 @@ import javax.annotation.Nullable;
  */
 public enum Category {
   // Income
-  MRINCOME(12165, false, true, true),
+  MRINCOME(16500, false, true, true),
   SRINCOME(0, false, true, true),
   // Expenses
-  BIGBOX(1000, true, true, false),
+  BIGBOX(1250, true, true, false),
   CAR(300, false, false, false),
-  CASH(160, true, true, false),
+  CASH(100, true, true, false),
   CHARITY(100, false, true, false),
-  CHILDCARE(1000, true, true, false),
+  CHILDCARE(2500, true, true, false),
   CTA(20, false, true, false),
   ENTERTAIN(600, true, true, false),
-  GIFT(400, false, false, false),
+  GIFT(450, false, false, false),
   GROCERY(1200, true, true, false),
-  HAIRCUT(60, false, true, false),
-  HOME(50, true, true, false),
-  INSURANCE(125, false, false, false),
-  KIDS(500, true, true, false),
+  HAIRCUT(125, false, true, false),
+  HOME(300, true, true, false),
+  INSURANCE(225, false, false, false),
+  KIDS(600, true, true, false),
   MARTYSP(150, true, true, false),
-  MEDICAL(400, false, true, false),
-  MISC(250, true, true, false),
-  MORTGAGE(3500, false, true, false),
+  MEDICAL(600, false, true, false),
+  MISC(300, true, true, false),
+  MORTGAGE(3400, false, true, false),
   OTHER(0, true, true, false),
   SALLYSP(200, true, true, false),
-  SAVING(200, false, true, false),
+  SAVING(0, false, true, false),
   TRAVEL(1000, false, false, false),
-  TUITION(300, false, true, false),
-  UTILITY(650, false, true, false);
+  TUITION(350, false, true, false),
+  UTILITY(750, false, true, false);
 
   private static Supplier<Set<String>> allCategoryNames =
       Suppliers.memoize(
@@ -175,3 +175,32 @@ public enum Category {
     }
   }
 }
+/**
+ // Income
+ MRINCOME(12165, false, true, true),
+ SRINCOME(0, false, true, true),
+ // Expenses
+ BIGBOX(1000, true, true, false),
+ CAR(300, false, false, false),
+ CASH(160, true, true, false),
+ CHARITY(100, false, true, false),
+ CHILDCARE(1000, true, true, false),
+ CTA(20, false, true, false),
+ ENTERTAIN(600, true, true, false),
+ GIFT(400, false, false, false),
+ GROCERY(1200, true, true, false),
+ HAIRCUT(60, false, true, false),
+ HOME(50, true, true, false),
+ INSURANCE(125, false, false, false),
+ KIDS(500, true, true, false),
+ MARTYSP(150, true, true, false),
+ MEDICAL(400, false, true, false),
+ MISC(250, true, true, false),
+ MORTGAGE(3500, false, true, false),
+ OTHER(0, true, true, false),
+ SALLYSP(200, true, true, false),
+ SAVING(200, false, true, false),
+ TRAVEL(1000, false, false, false),
+ TUITION(300, false, true, false),
+ UTILITY(650, false, true, false);
+*/
