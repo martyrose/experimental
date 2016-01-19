@@ -42,6 +42,7 @@ public enum Category {
   MEDICAL(600, false, true, false),
   MISC(300, true, true, false),
   MORTGAGE(3400, false, true, false),
+  ONETIME(5, false, false, false),
   OTHER(0, true, true, false),
   SALLYSP(200, true, true, false),
   SAVING(0, false, true, false),
