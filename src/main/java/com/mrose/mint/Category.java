@@ -93,6 +93,17 @@ public enum Category {
         new Predicate<Category>() {
           @Override
           public boolean apply(@Nullable Category input) {
+            return !input.isIncome && input != Category.ONETIME;
+          }
+        });
+  }
+
+  public static Set<Category> allExpensesIncludingOneTime() {
+    return Sets.filter(
+        allCategories(),
+        new Predicate<Category>() {
+          @Override
+          public boolean apply(@Nullable Category input) {
             return !input.isIncome;
           }
         });
@@ -144,7 +155,7 @@ public enum Category {
 
   public static Set<Category> excludingWhat(Set<Category> c) {
     return Sets.filter(
-        allExpenses(),
+        allExpensesIncludingOneTime(),
         new Predicate<Category>() {
           @Override
           public boolean apply(Category input) {
