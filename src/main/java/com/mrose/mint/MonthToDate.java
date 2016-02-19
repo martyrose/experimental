@@ -75,13 +75,11 @@ public class MonthToDate {
       Map<Category, Collection<MintRow>> data,
       Iterable<Category> categories,
       FinancialPeriod period,
-      Function<Long, Long> expectedCalculator,
       StringBuilder sb) {
     long totalBudget = 0;
     for (Category c : categories) {
       totalBudget = totalBudget + c.getAmount(period.getMonths());
     }
-    long expectedBudget = expectedCalculator.apply(totalBudget);
     long totalExpenses = 0;
     for (Category c : categories) {
       Collection<MintRow> rows = data.get(c);
@@ -90,25 +88,16 @@ public class MonthToDate {
       }
     }
     totalExpenses = dontGoPositive(totalExpenses);
-    long leftOver = expectedBudget + totalExpenses;
-
-    if (leftOver > 0) {
-      // ON TRACK
-      sb.append(
-          "Spent: "
-              + currencyFormat.format(expensesExpressedPositive(totalExpenses))
-              + " of "
-              + currencyFormat.format(totalBudget)
-              + "\n");
-    } else {
-      // NOT ON TRACK
-      sb.append(
-          "Spent: "
-              + currencyFormat.format(expensesExpressedPositive(totalExpenses))
-              + " of "
-              + currencyFormat.format(totalBudget)
-              + "\n");
-    }
+    sb.append(
+        "Spent: "
+            + currencyFormat.format(expensesExpressedPositive(totalExpenses))
+            + " of "
+            + currencyFormat.format(totalBudget)
+            + " ["
+            + percentFormat.format(
+                (double) expensesExpressedPositive(totalExpenses) / (double) totalBudget)
+            + "]"
+            + "\n");
   }
 
   public static void main(String[] args) throws Exception {
@@ -135,7 +124,6 @@ public class MonthToDate {
     // Sort them
     nonFilteredMintRows = new MintRowOrdering().immutableSortedCopy(nonFilteredMintRows);
 
-
     System.out.println("\n");
     System.out.println("Percent of Month Complete: " + percentFormat.format(percentInMonth));
     printSummaryRows(nonFilteredMintRows, PRIMARY_PERIOD);
@@ -144,21 +132,12 @@ public class MonthToDate {
     System.out.println("\n\n");
     printSummaryRows(nonFilteredMintRows, EXTENDED_PERIOD);
 
-
     System.out.println("\n\n");
     System.out.println("=============================");
     System.out.println("Single Month All Category Details:");
     byCategoryDetails(
         new PartialMonthFunction(percentInMonth),
         PRIMARY_PERIOD,
-        Category.sortByAmount(Category.allExpenses()),
-        nonFilteredMintRows);
-
-    System.out.println("=============================");
-    System.out.println("Multi Month All Category Details:");
-    byCategoryDetails(
-        Functions.identity(),
-        EXTENDED_PERIOD,
         Category.sortByAmount(Category.allExpenses()),
         nonFilteredMintRows);
 
@@ -171,6 +150,14 @@ public class MonthToDate {
         nonFilteredMintRows);
 
     System.out.println("=============================");
+    System.out.println("Multi Month All Category Details:");
+    byCategoryDetails(
+        Functions.identity(),
+        EXTENDED_PERIOD,
+        Category.sortByAmount(Category.allExpenses()),
+        nonFilteredMintRows);
+
+    System.out.println("=============================");
     System.out.println("Multi Month Category Details:");
     byCategoryDetails(
         Functions.identity(),
@@ -179,19 +166,18 @@ public class MonthToDate {
         nonFilteredMintRows);
   }
 
-  private static void printSummaryRows(Iterable<MintRow> nonFilteredMintRows, FinancialPeriod timePeriod) {
+  private static void printSummaryRows(
+      Iterable<MintRow> nonFilteredMintRows, FinancialPeriod timePeriod) {
     // Filter rows we don't care about
     Iterable<MintRow> filteredMintRows =
         Iterables.filter(nonFilteredMintRows, new MintRowPredicate(timePeriod));
 
-    Map<Category, Collection<MintRow>> categorize = getCategoryCollectionMap(filteredMintRows, true);
+    Map<Category, Collection<MintRow>> categorize =
+        getCategoryCollectionMap(filteredMintRows, true);
 
     System.out.println("\n");
     System.out.println(
-        "Period: "
-            + dtf.print(timePeriod.getStart())
-            + " - "
-            + dtf.print(timePeriod.getEnd()));
+        "Period: " + dtf.print(timePeriod.getStart()) + " - " + dtf.print(timePeriod.getEnd()));
 
     {
       System.out.println("");
@@ -212,8 +198,7 @@ public class MonthToDate {
     }
     {
       StringBuilder summary = new StringBuilder();
-      emitSummary(
-          categorize, Category.allExpenses(), timePeriod, Functions.identity(), summary);
+      emitSummary(categorize, Category.allExpenses(), timePeriod, summary);
       System.out.println("All Expenses");
       System.out.println("Includes: " + Category.sortByAmount(Category.allExpenses()).toString());
       System.out.println(
@@ -224,14 +209,14 @@ public class MonthToDate {
     {
       StringBuilder summary = new StringBuilder();
       emitSummary(
-          categorize, Category.allMonthlyExpenses(), timePeriod, Functions.identity(), summary);
+          categorize, Category.allMonthlyExpenses(), timePeriod, summary);
       System.out.println("Only expenses that are consistent month to month");
       System.out.println(
           "Includes: " + Category.sortByAmount(Category.allMonthlyExpenses()).toString());
       System.out.println(
           "Excludes: "
               + Category.sortByAmount(Category.excludingWhat(Category.allMonthlyExpenses()))
-              .toString());
+                  .toString());
       System.out.println(summary.toString());
     }
   }
@@ -256,7 +241,8 @@ public class MonthToDate {
     Iterable<MintRow> filteredMintRows =
         Iterables.filter(allMintRows, new MintRowPredicate(period));
 
-    Map<Category, Collection<MintRow>> categorize = getCategoryCollectionMap(filteredMintRows, false);
+    Map<Category, Collection<MintRow>> categorize =
+        getCategoryCollectionMap(filteredMintRows, false);
 
     for (Category category : categories) {
       Collection<MintRow> mints =
@@ -282,7 +268,7 @@ public class MonthToDate {
           describeCategoryState(category, period, categoryExpenses, overTrack);
           overTrack.append("\n");
           for (MintRow mr : categorize.get(category)) {
-            overTrack.append("\t");
+            overTrack.append("  ");
             describeMintRow(mr, overTrack);
             overTrack.append("\n");
           }
@@ -316,15 +302,16 @@ public class MonthToDate {
     for (MintRow mr : mintRows) {
       String categoryName = mr.getCategory();
       if (StringUtils.isBlank(categoryName)) {
-        if( doLog ) {
+        if (doLog) {
           System.out.println("Unable to categorize: " + mr.toString());
         }
         categoryName = "OTHER";
       }
       // This catches if i spell something wrong
       if (!Category.contains(categoryName)) {
-        if(doLog) {
-          System.out.println("UNKNOWN CATEGORY: " + categoryName + " Description: " + mr.getDescription());
+        if (doLog) {
+          System.out.println(
+              "UNKNOWN CATEGORY: " + categoryName + " Description: " + mr.getDescription());
         }
         continue;
       }
