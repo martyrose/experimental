@@ -47,7 +47,7 @@ public class MonthToDate {
   // readlink -f file
   private static final String FILE_PATH = "/tmp/transactions.csv";
   private static final FinancialPeriod PRIMARY_PERIOD =
-      new FinancialPeriod(new YearMonth(2016, DateTimeConstants.FEBRUARY).toInterval(), 1);
+      new FinancialPeriod(new YearMonth(2016, DateTimeConstants.MARCH).toInterval(), 1);
   private static final FinancialPeriod EXTENDED_PERIOD =
       new FinancialPeriod(
           new Interval(
@@ -301,6 +301,9 @@ public class MonthToDate {
     Map<Category, Collection<MintRow>> categorize = new HashMap<>();
     for (MintRow mr : mintRows) {
       String categoryName = mr.getCategory();
+      if(StringUtils.equals("IGNORE", categoryName)) {
+        continue;
+      }
       if (StringUtils.isBlank(categoryName)) {
         if (doLog) {
           System.out.println("Unable to categorize: " + mr.toString());

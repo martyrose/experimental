@@ -29,7 +29,7 @@ public enum Category {
   CAR(300, false, false, false),
   CASH(100, true, true, false),
   CHARITY(100, false, true, false),
-  CHILDCARE(3000, true, true, false),
+  CHILDCARE(2900, true, true, false),
   CTA(20, false, true, false),
   ENTERTAIN(600, true, true, false),
   GIFT(450, false, false, false),
@@ -47,7 +47,7 @@ public enum Category {
   SALLYSP(200, true, true, false),
   SAVING(0, false, true, false),
   TRAVEL(1000, false, false, false),
-  TUITION(650, false, true, false),
+  TUITION(850, false, true, false),
   UTILITY(775, false, true, false);
 
   private static Supplier<Set<String>> allCategoryNames =
