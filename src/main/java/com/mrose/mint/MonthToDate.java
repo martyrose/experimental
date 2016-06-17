@@ -47,13 +47,13 @@ public class MonthToDate {
   // readlink -f file
   private static final String FILE_PATH = "/tmp/transactions.csv";
   private static final FinancialPeriod PRIMARY_PERIOD =
-      new FinancialPeriod(new YearMonth(2016, DateTimeConstants.APRIL).toInterval(), 1);
+      new FinancialPeriod(new YearMonth(2016, DateTimeConstants.MAY).toInterval(), 1);
   private static final FinancialPeriod EXTENDED_PERIOD =
       new FinancialPeriod(
           new Interval(
               new YearMonth(2015, DateTimeConstants.NOVEMBER).toInterval().getStart(),
-              new YearMonth(2016, DateTimeConstants.MARCH).toInterval().getEnd()),
-          4);
+              new YearMonth(2016, DateTimeConstants.MAY).toInterval().getEnd()),
+          7);
 
   // 1/04/2012
   // http://joda-time.sourceforge.net/apidocs/org/joda/time/format/DateTimeFormat.html
