@@ -47,12 +47,12 @@ public class MonthToDate {
   // readlink -f file
   private static final String FILE_PATH = "/tmp/transactions.csv";
   private static final FinancialPeriod PRIMARY_PERIOD =
-      new FinancialPeriod(new YearMonth(2016, DateTimeConstants.NOVEMBER).toInterval(), 1);
+      new FinancialPeriod(new YearMonth(2017, DateTimeConstants.JANUARY).toInterval(), 1);
   private static final FinancialPeriod EXTENDED_PERIOD =
       new FinancialPeriod(
           new Interval(
-              new YearMonth(2015, DateTimeConstants.DECEMBER).toInterval().getStart(),
-              new YearMonth(2016, DateTimeConstants.NOVEMBER).toInterval().getEnd()),
+              new YearMonth(2016, DateTimeConstants.FEBRUARY).toInterval().getStart(),
+              new YearMonth(2017, DateTimeConstants.JANUARY).toInterval().getEnd()),
           12);
 
   // 1/04/2012
