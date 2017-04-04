@@ -47,13 +47,13 @@ public class MonthToDate {
   // readlink -f file
   private static final String FILE_PATH = "/tmp/transactions.csv";
   private static final FinancialPeriod PRIMARY_PERIOD =
-      new FinancialPeriod(new YearMonth(2017, DateTimeConstants.FEBRUARY).toInterval(), 1);
+      new FinancialPeriod(new YearMonth(2017, DateTimeConstants.MARCH).toInterval(), 1);
   private static final FinancialPeriod EXTENDED_PERIOD =
       new FinancialPeriod(
           new Interval(
-              new YearMonth(2016, DateTimeConstants.MARCH).toInterval().getStart(),
-              new YearMonth(2017, DateTimeConstants.FEBRUARY).toInterval().getEnd()),
-          12);
+              new YearMonth(2017, DateTimeConstants.JANUARY).toInterval().getStart(),
+              new YearMonth(2017, DateTimeConstants.MARCH).toInterval().getEnd()),
+          3);
 
   // 1/04/2012
   // http://joda-time.sourceforge.net/apidocs/org/joda/time/format/DateTimeFormat.html
@@ -138,7 +138,7 @@ public class MonthToDate {
     byCategoryDetails(
         new PartialMonthFunction(percentInMonth),
         PRIMARY_PERIOD,
-        Category.sortByAmount(Category.allExpenses()),
+        Category.sortByAmount(Category.allExpensesExcludingOneTime()),
         nonFilteredMintRows);
 
     System.out.println("=============================");
@@ -154,7 +154,7 @@ public class MonthToDate {
     byCategoryDetails(
         Functions.identity(),
         EXTENDED_PERIOD,
-        Category.sortByAmount(Category.allExpenses()),
+        Category.sortByAmount(Category.allExpensesExcludingOneTime()),
         nonFilteredMintRows);
 
     System.out.println("=============================");
@@ -198,12 +198,23 @@ public class MonthToDate {
     }
     {
       StringBuilder summary = new StringBuilder();
-      emitSummary(categorize, Category.allExpenses(), timePeriod, summary);
-      System.out.println("All Expenses");
-      System.out.println("Includes: " + Category.sortByAmount(Category.allExpenses()).toString());
+      emitSummary(categorize, Category.allExpensesIncludingOneTime(), timePeriod, summary);
+      System.out.println("All Expenses Including One Time");
+      System.out.println("Includes: " + Category.sortByAmount(Category.allExpensesIncludingOneTime()).toString());
       System.out.println(
           "Excludes: "
-              + Category.sortByAmount(Category.excludingWhat(Category.allExpenses())).toString());
+              + Category.sortByAmount(Category.excludingWhat(Category.allExpensesIncludingOneTime())).toString());
+      System.out.println(summary.toString());
+    }
+
+    {
+      StringBuilder summary = new StringBuilder();
+      emitSummary(categorize, Category.allExpensesExcludingOneTime(), timePeriod, summary);
+      System.out.println("All Expenses Excluding One Time");
+      System.out.println("Includes: " + Category.sortByAmount(Category.allExpensesExcludingOneTime()).toString());
+      System.out.println(
+          "Excludes: "
+              + Category.sortByAmount(Category.excludingWhat(Category.allExpensesExcludingOneTime())).toString());
       System.out.println(summary.toString());
     }
     {
@@ -258,7 +269,8 @@ public class MonthToDate {
         double percentOver =
             ((double) categoryExpenses) / ((double) category.getAmount(period.getMonths()) * -1.0)
                 - 1.0;
-        boolean closeEnough = percentOver < .05;
+
+        boolean closeEnough = percentOver < .05 || remainingMoney > -200;
         if (closeEnough) {
           offTrack.append("CLOSE ENOUGH: ");
           describeCategoryState(category, period, categoryExpenses, offTrack);

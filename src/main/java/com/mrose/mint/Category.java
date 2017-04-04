@@ -87,7 +87,7 @@ public enum Category {
     return EnumSet.allOf(Category.class);
   }
 
-  public static Set<Category> allExpenses() {
+  public static Set<Category> allExpensesExcludingOneTime() {
     return Sets.filter(
         allCategories(),
         new Predicate<Category>() {
