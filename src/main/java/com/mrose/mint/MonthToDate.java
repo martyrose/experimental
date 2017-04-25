@@ -142,27 +142,11 @@ public class MonthToDate {
         nonFilteredMintRows);
 
     System.out.println("=============================");
-    System.out.println("Single Month Smooth Category Details:");
-    byCategoryDetails(
-        new PartialMonthFunction(percentInMonth),
-        PRIMARY_PERIOD,
-        Category.sortByAmount(Category.allMonthlySmoothExpenses()),
-        nonFilteredMintRows);
-
-    System.out.println("=============================");
     System.out.println("Multi Month All Category Details:");
     byCategoryDetails(
         Functions.identity(),
         EXTENDED_PERIOD,
-        Category.sortByAmount(Category.allExpensesExcludingOneTime()),
-        nonFilteredMintRows);
-
-    System.out.println("=============================");
-    System.out.println("Multi Month Category Details:");
-    byCategoryDetails(
-        Functions.identity(),
-        EXTENDED_PERIOD,
-        Category.sortByAmount(Category.allMultiMonthExpenses()),
+        Category.sortByAmount(Category.allExpensesIncludingOneTime()),
         nonFilteredMintRows);
   }
 
