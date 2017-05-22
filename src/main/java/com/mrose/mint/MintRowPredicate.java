@@ -49,6 +49,9 @@ public class MintRowPredicate implements Predicate<MintRow> {
     @Override
     public boolean apply(@Nullable MintRow input) {
       String account = input.getAccountName();
+      if(account.endsWith("IGNORE")) {
+        return false;
+      }
       switch (account) {
         case "AMEX":
         case "MARTYCHECKING":
@@ -57,10 +60,12 @@ public class MintRowPredicate implements Predicate<MintRow> {
         case "SALLYCHECKING":
         case "CHASECC9478":
         case "TARGETCREDITCARD":
+        case "NORDSTROM":
+        case "BANANA":
           return true;
         case "FAMILYSAVINGS":
         case "IGNORE":
-          return false;
+        case "2425WWINONAST":
         case "GOOGLE401K":
           return false;
       }
