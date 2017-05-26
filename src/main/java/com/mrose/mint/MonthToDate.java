@@ -138,7 +138,7 @@ public class MonthToDate {
     byCategoryDetails(
         new PartialMonthFunction(percentInMonth),
         PRIMARY_PERIOD,
-        Category.sortByAmount(Category.allExpensesExcludingOneTime()),
+        Category.sortByAmount(Category.allExpensesIncludingOneTime()),
         nonFilteredMintRows);
 
     System.out.println("=============================");

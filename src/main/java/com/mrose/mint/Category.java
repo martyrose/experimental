@@ -93,7 +93,7 @@ public enum Category {
         new Predicate<Category>() {
           @Override
           public boolean apply(@Nullable Category input) {
-            return !input.isIncome && input != Category.ONETIME;
+            return !input.isIncome && input != Category.ONETIME && input != Category.TRAVEL;
           }
         });
   }
