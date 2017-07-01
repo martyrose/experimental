@@ -47,13 +47,13 @@ public class MonthToDate {
   // readlink -f file
   private static final String FILE_PATH = "/tmp/transactions.csv";
   private static final FinancialPeriod PRIMARY_PERIOD =
-      new FinancialPeriod(new YearMonth(2017, DateTimeConstants.MAY).toInterval(), 1);
+      new FinancialPeriod(new YearMonth(2017, DateTimeConstants.JUNE).toInterval(), 1);
   private static final FinancialPeriod EXTENDED_PERIOD =
       new FinancialPeriod(
           new Interval(
               new YearMonth(2017, DateTimeConstants.JANUARY).toInterval().getStart(),
-              new YearMonth(2017, DateTimeConstants.MAY).toInterval().getEnd()),
-          5);
+              new YearMonth(2017, DateTimeConstants.JUNE).toInterval().getEnd()),
+          6);
 
   // 1/04/2012
   // http://joda-time.sourceforge.net/apidocs/org/joda/time/format/DateTimeFormat.html
@@ -106,7 +106,7 @@ public class MonthToDate {
     double percentInMonth;
     if (PRIMARY_PERIOD.contains(DateTime.now())) {
       // TODO : Should be using what we have posted transactions through so it lags a few days
-      // ie only throu min_date(uncategorized rows)
+      // ie only through min_date(uncategorized rows)
       int numDays = Days.daysBetween(PRIMARY_PERIOD.getStart(), PRIMARY_PERIOD.getEnd()).getDays();
       percentInMonth = ((double) DateTime.now().getDayOfMonth()) / ((double) numDays);
     } else if (PRIMARY_PERIOD.isBefore(DateTime.now())) {
