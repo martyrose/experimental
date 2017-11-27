@@ -1,7 +1,12 @@
 package com.mrose.oneoff;
 
+import com.google.common.primitives.UnsignedLong;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.MathContext;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,8 +22,8 @@ public class GenerateCommands {
   private static final Logger log = LoggerFactory.getLogger(GenerateCommands.class);
 
   public static void main(String[] args) throws IOException {
-    Pattern p = Pattern.compile("^.+@google.com$");
-    Matcher m = p.matcher("@google.com");
-    log.warn(""+ m.matches());
+    DateTimeZone dtz = DateTimeZone.forID("America/Los_Angeles");
+    log.warn(dtz.getID());
+
   }
 }
