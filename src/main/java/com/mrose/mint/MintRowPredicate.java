@@ -53,6 +53,7 @@ public class MintRowPredicate implements Predicate<MintRow> {
         return false;
       }
       switch (account) {
+        case "CASH":
         case "AMEX":
         case "MARTYCHECKING":
         case "BOFA":

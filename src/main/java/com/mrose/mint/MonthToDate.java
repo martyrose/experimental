@@ -53,7 +53,8 @@ public class MonthToDate {
           new Interval(
               new YearMonth(2017, DateTimeConstants.JANUARY).toInterval().getStart(),
               new YearMonth(2017, DateTimeConstants.NOVEMBER).toInterval().getEnd()),
-          11);
+          12);
+  private static boolean INCLUDE_LINE_DETAILS = false;
 
   // 1/04/2012
   // http://joda-time.sourceforge.net/apidocs/org/joda/time/format/DateTimeFormat.html
@@ -263,10 +264,12 @@ public class MonthToDate {
           overTrack.append("OVER BUDGET: ");
           describeCategoryState(category, period, categoryExpenses, overTrack);
           overTrack.append("\n");
-          for (MintRow mr : categorize.get(category)) {
-            overTrack.append("  ");
-            describeMintRow(mr, overTrack);
-            overTrack.append("\n");
+          if( INCLUDE_LINE_DETAILS ) {
+            for (MintRow mr : categorize.get(category)) {
+              overTrack.append("  ");
+              describeMintRow(mr, overTrack);
+              overTrack.append("\n");
+            }
           }
         }
       } else {
@@ -275,10 +278,12 @@ public class MonthToDate {
           offTrack.append("NOT ON TRACK: ");
           describeCategoryState(category, period, categoryExpenses, offTrack);
           offTrack.append("\n");
-          for (MintRow mr : categorize.get(category)) {
-            offTrack.append("  ");
-            describeMintRow(mr, offTrack);
-            offTrack.append("\n");
+          if( INCLUDE_LINE_DETAILS ) {
+            for (MintRow mr : categorize.get(category)) {
+              offTrack.append("  ");
+              describeMintRow(mr, offTrack);
+              offTrack.append("\n");
+            }
           }
         } else {
           onTrack.append("ONTRACK: ");
@@ -357,12 +362,12 @@ public class MonthToDate {
     //    if (mr.getFinancialAmount().longValue() > 0) {
     //      sb.append("RETURN ");
     //    }
-    sb.append(
-        currencyFormat.format(mr.getFinancialAmount().longValue())
-            + " : "
-            + dtf.print(mr.getDate())
-            + " : "
-            + mr.getDescription());
+      sb.append(
+          currencyFormat.format(mr.getFinancialAmount().longValue())
+              + " : "
+              + dtf.print(mr.getDate())
+              + " : "
+              + mr.getDescription());
   }
 
   private static BigDecimal sum(Iterable<MintRow> mintRows) {
