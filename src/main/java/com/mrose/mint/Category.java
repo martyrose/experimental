@@ -22,33 +22,33 @@ import javax.annotation.Nullable;
  */
 public enum Category {
   // Income
-  MRINCOME(18663, false, true, true),
+  MRINCOME(21921, false, true, true),
   SRINCOME(0, false, true, true),
   // Expenses
-  BIGBOX(1200, true, true, false),
+  BIGBOX(1650, true, true, false),
   CAR(450, false, false, false),
   CASH(100, true, true, false),
-  CHARITY(100, false, true, false),
-  CHILDCARE(2500, true, true, false),
-  CTA(30, false, true, false),
-  ENTERTAIN(550, true, true, false),
-  GIFT(600, false, false, false),
+  CHARITY(125, false, true, false),
+  CHILDCARE(2550, true, true, false),
+  CTA(40, false, true, false),
+  ENTERTAIN(625, true, true, false),
+  GIFT(750, false, false, false),
   GROCERY(1250, true, true, false),
-  HAIRCUT(135, false, true, false),
-  HOME(275, true, true, false),
-  INSURANCE(425, false, false, false),
-  KIDS(700, true, true, false),
-  MARTYSP(150, true, true, false),
-  MEDICAL(550, false, true, false),
-  MISC(225, true, true, false),
-  MORTGAGE(4760, false, true, false),
+  HAIRCUT(175, false, true, false),
+  HOME(325, true, true, false),
+  INSURANCE(450, false, false, false),
+  KIDS(900, true, true, false),
+  MARTYSP(100, true, true, false),
+  MEDICAL(800, false, true, false),
+  MISC(325, true, true, false),
+  MORTGAGE(4250, false, true, false),
   ONETIME(1, false, false, false),
   OTHER(0, true, true, false),
-  SALLYSP(200, true, true, false),
+  SALLYSP(175, true, true, false),
   SAVING(0, false, true, false),
   TRAVEL(1, false, false, false),
-  TUITION(850, false, true, false),
-  UTILITY(810, false, true, false);
+  TUITION(250, false, true, false),
+  UTILITY(950, false, true, false);
 
   private static Supplier<Set<String>> allCategoryNames =
       Suppliers.memoize(
