@@ -47,17 +47,17 @@ public class MonthToDate {
   // readlink -f file
   private static final String FILE_PATH = "/tmp/transactions.csv";
   private static final FinancialPeriod PRIMARY_PERIOD =
-      new FinancialPeriod(new YearMonth(2018, DateTimeConstants.MARCH).toInterval(), 1);
+      new FinancialPeriod(new YearMonth(2018, DateTimeConstants.APRIL).toInterval(), 1);
   private static final FinancialPeriod EXTENDED_PERIOD =
       new FinancialPeriod(
           new Interval(
               new YearMonth(2018, DateTimeConstants.JANUARY).toInterval().getStart(),
-              new YearMonth(2018, DateTimeConstants.MARCH).toInterval().getEnd()),
-          3);
-  private static boolean INCLUDE_LINE_DETAILS = false;
+              new YearMonth(2018, DateTimeConstants.APRIL).toInterval().getEnd()),
+          4);
+  private static boolean INCLUDE_LINE_DETAILS = true;
 
   // 1/04/2012
-  // http://joda-time.sourceforge.net/apidocs/org/joda/time/format/DateTimeFormat.html
+  // http://joda-time.sour ceforge.net/apidocs/org/joda/time/format/DateTimeFormat.html
   private static final DateTimeFormatter dtf = DateTimeFormat.forPattern("MM/dd/yyyy");
   private static final NumberFormat percentFormat = NumberFormat.getPercentInstance();
   private static final NumberFormat currencyFormat = NumberFormat.getCurrencyInstance();
