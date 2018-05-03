@@ -96,7 +96,7 @@ public class MonthToDate {
             + currencyFormat.format(totalBudget)
             + " ["
             + percentFormat.format(
-                (double) expensesExpressedPositive(totalExpenses) / (double) totalBudget)
+            (double) expensesExpressedPositive(totalExpenses) / (double) totalBudget)
             + "]"
             + "\n");
   }
@@ -185,10 +185,13 @@ public class MonthToDate {
       StringBuilder summary = new StringBuilder();
       emitSummary(categorize, Category.allExpensesIncludingOneTime(), timePeriod, summary);
       System.out.println("All Expenses Including One Time");
-      System.out.println("Includes: " + Category.sortByAmount(Category.allExpensesIncludingOneTime()).toString());
+      System.out.println(
+          "Includes: " + Category.sortByAmount(Category.allExpensesIncludingOneTime()).toString());
       System.out.println(
           "Excludes: "
-              + Category.sortByAmount(Category.excludingWhat(Category.allExpensesIncludingOneTime())).toString());
+              + Category
+              .sortByAmount(Category.excludingWhat(Category.allExpensesIncludingOneTime()))
+              .toString());
       System.out.println(summary.toString());
     }
 
@@ -196,10 +199,13 @@ public class MonthToDate {
       StringBuilder summary = new StringBuilder();
       emitSummary(categorize, Category.allExpensesExcludingOneTime(), timePeriod, summary);
       System.out.println("All Expenses Excluding One Time");
-      System.out.println("Includes: " + Category.sortByAmount(Category.allExpensesExcludingOneTime()).toString());
+      System.out.println(
+          "Includes: " + Category.sortByAmount(Category.allExpensesExcludingOneTime()).toString());
       System.out.println(
           "Excludes: "
-              + Category.sortByAmount(Category.excludingWhat(Category.allExpensesExcludingOneTime())).toString());
+              + Category
+              .sortByAmount(Category.excludingWhat(Category.allExpensesExcludingOneTime()))
+              .toString());
       System.out.println(summary.toString());
     }
     {
@@ -212,7 +218,7 @@ public class MonthToDate {
       System.out.println(
           "Excludes: "
               + Category.sortByAmount(Category.excludingWhat(Category.allMonthlyExpenses()))
-                  .toString());
+              .toString());
       System.out.println(summary.toString());
     }
   }
@@ -255,16 +261,23 @@ public class MonthToDate {
             ((double) categoryExpenses) / ((double) category.getAmount(period.getMonths()) * -1.0)
                 - 1.0;
 
-        boolean closeEnough = percentOver < .05 || remainingMoney > -200;
+        boolean closeEnough = percentOver < .03 || remainingMoney > -200;
         if (closeEnough) {
           offTrack.append("CLOSE ENOUGH: ");
           describeCategoryState(category, period, categoryExpenses, offTrack);
           offTrack.append("\n");
+          if (INCLUDE_LINE_DETAILS) {
+            for (MintRow mr : categorize.get(category)) {
+              offTrack.append("  ");
+              describeMintRow(mr, offTrack);
+              offTrack.append("\n");
+            }
+          }
         } else {
           overTrack.append("OVER BUDGET: ");
           describeCategoryState(category, period, categoryExpenses, overTrack);
           overTrack.append("\n");
-          if( INCLUDE_LINE_DETAILS ) {
+          if (INCLUDE_LINE_DETAILS) {
             for (MintRow mr : categorize.get(category)) {
               overTrack.append("  ");
               describeMintRow(mr, overTrack);
@@ -278,7 +291,7 @@ public class MonthToDate {
           offTrack.append("NOT ON TRACK: ");
           describeCategoryState(category, period, categoryExpenses, offTrack);
           offTrack.append("\n");
-          if( INCLUDE_LINE_DETAILS ) {
+          if (INCLUDE_LINE_DETAILS) {
             for (MintRow mr : categorize.get(category)) {
               offTrack.append("  ");
               describeMintRow(mr, offTrack);
@@ -302,7 +315,7 @@ public class MonthToDate {
     Map<Category, Collection<MintRow>> categorize = new HashMap<>();
     for (MintRow mr : mintRows) {
       String categoryName = mr.getCategory();
-      if(StringUtils.equals("IGNORE", categoryName)) {
+      if (StringUtils.equals("IGNORE", categoryName)) {
         continue;
       }
       if (StringUtils.isBlank(categoryName)) {
@@ -340,7 +353,8 @@ public class MonthToDate {
               + c.name()
               + " spent "
               + currencyFormat.format(expensesExpressedPositive(dontGoPositive(actualSpend)))
-          + " (" + currencyFormat.format(expensesExpressedPositive(actualSpend/period.getMonths())) + ")"
+              + " (" + currencyFormat
+              .format(expensesExpressedPositive(actualSpend / period.getMonths())) + ")"
               + " of "
               + currencyFormat.format(c.getAmount(period.getMonths()))
               + " with "
@@ -352,7 +366,8 @@ public class MonthToDate {
               + c.name()
               + " spent "
               + currencyFormat.format(expensesExpressedPositive(dontGoPositive(actualSpend)))
-              + " (" + currencyFormat.format(expensesExpressedPositive(actualSpend/period.getMonths())) + ")"
+              + " (" + currencyFormat
+              .format(expensesExpressedPositive(actualSpend / period.getMonths())) + ")"
               + " budgeted "
               + currencyFormat.format(c.getAmount(period.getMonths()))
               + " over by "
@@ -364,12 +379,12 @@ public class MonthToDate {
     //    if (mr.getFinancialAmount().longValue() > 0) {
     //      sb.append("RETURN ");
     //    }
-      sb.append(
-          currencyFormat.format(mr.getFinancialAmount().longValue())
-              + " : "
-              + dtf.print(mr.getDate())
-              + " : "
-              + mr.getDescription());
+    sb.append(
+        currencyFormat.format(mr.getFinancialAmount().longValue())
+            + " : "
+            + dtf.print(mr.getDate())
+            + " : "
+            + mr.getDescription());
   }
 
   private static BigDecimal sum(Iterable<MintRow> mintRows) {
