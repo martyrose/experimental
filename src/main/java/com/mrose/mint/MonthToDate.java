@@ -47,14 +47,15 @@ public class MonthToDate {
   // readlink -f file
   private static final String FILE_PATH = "/tmp/transactions.csv";
   private static final FinancialPeriod PRIMARY_PERIOD =
-      new FinancialPeriod(new YearMonth(2018, DateTimeConstants.APRIL).toInterval(), 1);
+      new FinancialPeriod(new YearMonth(2019, DateTimeConstants.FEBRUARY).toInterval(), 1);
   private static final FinancialPeriod EXTENDED_PERIOD =
       new FinancialPeriod(
           new Interval(
-              new YearMonth(2018, DateTimeConstants.JANUARY).toInterval().getStart(),
-              new YearMonth(2018, DateTimeConstants.APRIL).toInterval().getEnd()),
-          4);
+              new YearMonth(2019, DateTimeConstants.JANUARY).toInterval().getStart(),
+              new YearMonth(2019, DateTimeConstants.FEBRUARY).toInterval().getEnd()),
+          2);
   private static boolean INCLUDE_LINE_DETAILS = true;
+  private static boolean INCLUDE_EXTENDED_PERIOD = false;
 
   // 1/04/2012
   // http://joda-time.sour ceforge.net/apidocs/org/joda/time/format/DateTimeFormat.html
@@ -130,10 +131,6 @@ public class MonthToDate {
     printSummaryRows(nonFilteredMintRows, PRIMARY_PERIOD);
 
     System.out.println("\n\n");
-    System.out.println("\n\n");
-    printSummaryRows(nonFilteredMintRows, EXTENDED_PERIOD);
-
-    System.out.println("\n\n");
     System.out.println("=============================");
     System.out.println("Single Month All Category Details:");
     byCategoryDetails(
@@ -142,13 +139,19 @@ public class MonthToDate {
         Category.sortByAmount(Category.allExpensesIncludingOneTime()),
         nonFilteredMintRows);
 
-    System.out.println("=============================");
-    System.out.println("Multi Month All Category Details:");
-    byCategoryDetails(
-        Functions.identity(),
-        EXTENDED_PERIOD,
-        Category.sortByAmount(Category.allExpensesIncludingOneTime()),
-        nonFilteredMintRows);
+    if(INCLUDE_EXTENDED_PERIOD) {
+      System.out.println("\n\n");
+      System.out.println("\n\n");
+      printSummaryRows(nonFilteredMintRows, EXTENDED_PERIOD);
+
+      System.out.println("=============================");
+      System.out.println("Multi Month All Category Details:");
+      byCategoryDetails(
+          Functions.identity(),
+          EXTENDED_PERIOD,
+          Category.sortByAmount(Category.allExpensesIncludingOneTime()),
+          nonFilteredMintRows);
+    }
   }
 
   private static void printSummaryRows(
@@ -302,6 +305,15 @@ public class MonthToDate {
           onTrack.append("ONTRACK: ");
           describeCategoryState(category, period, categoryExpenses, onTrack);
           onTrack.append("\n");
+          if (INCLUDE_LINE_DETAILS) {
+            Collection<MintRow> details = categorize.get(category);
+            details = details == null ? Collections.emptyList() : details;
+            for (MintRow mr : details) {
+              onTrack.append("  ");
+              describeMintRow(mr, onTrack);
+              onTrack.append("\n");
+            }
+          }
         }
       }
     }

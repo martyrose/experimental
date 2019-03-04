@@ -52,20 +52,10 @@ public enum Category {
 
   private static Supplier<Set<String>> allCategoryNames =
       Suppliers.memoize(
-          new Supplier<Set<String>>() {
-            @Override
-            public Set<String> get() {
-              return ImmutableSet.copyOf(
-                  Iterables.transform(
-                      Arrays.asList(Category.values()),
-                      new Function<Category, String>() {
-                        @Override
-                        public String apply(Category input) {
-                          return input.name();
-                        }
-                      }));
-            }
-          });
+          () -> ImmutableSet.copyOf(
+              Iterables.transform(
+                  Arrays.asList(Category.values()),
+                  Enum::name)));
 
   private boolean isMonthlySmooth;
   private boolean isMonthBased;
