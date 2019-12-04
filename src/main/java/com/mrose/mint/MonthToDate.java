@@ -47,15 +47,15 @@ public class MonthToDate {
   // readlink -f file
   private static final String FILE_PATH = "/tmp/transactions.csv";
   private static final FinancialPeriod PRIMARY_PERIOD =
-      new FinancialPeriod(new YearMonth(2019, DateTimeConstants.FEBRUARY).toInterval(), 1);
+      new FinancialPeriod(new YearMonth(2019, DateTimeConstants.NOVEMBER).toInterval(), 1);
   private static final FinancialPeriod EXTENDED_PERIOD =
       new FinancialPeriod(
           new Interval(
               new YearMonth(2019, DateTimeConstants.JANUARY).toInterval().getStart(),
-              new YearMonth(2019, DateTimeConstants.FEBRUARY).toInterval().getEnd()),
-          2);
-  private static boolean INCLUDE_LINE_DETAILS = true;
-  private static boolean INCLUDE_EXTENDED_PERIOD = false;
+              new YearMonth(2019, DateTimeConstants.NOVEMBER).toInterval().getEnd()),
+          11);
+  private static boolean INCLUDE_LINE_DETAILS = false;
+  private static boolean INCLUDE_EXTENDED_PERIOD = true;
 
   // 1/04/2012
   // http://joda-time.sour ceforge.net/apidocs/org/joda/time/format/DateTimeFormat.html

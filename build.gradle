@@ -24,7 +24,7 @@ dependencies {
     compile group: 'com.google.truth', name: 'truth', version: '0.30'
 
     compile 'junit:junit:4.12'
-    runtime group: 'postgresql', name: 'postgresql', version: '9.4.1208-jdbc42-atlassian-hosted'
+    // runtime group: 'postgresql', name: 'postgresql', version: '9.4.1208-jdbc42-atlassian-hosted'
 
     //slf4J logging
     ['slf4j-api'].each {

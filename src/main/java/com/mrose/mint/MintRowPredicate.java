@@ -71,6 +71,8 @@ public class MintRowPredicate implements Predicate<MintRow> {
         case "2425WWINONAST":
         case "XXXXXX7674":
         case "GOOGLE401K":
+        case "AMERIPRISEONEACCT":
+        case "CREDITCARDACCOUNT":
           return false;
       }
 
