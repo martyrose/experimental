@@ -17,15 +17,15 @@ import java.util.stream.Stream;
  */
 public class SolutionUtils {
 
-  static GuessResult calculate(Solution actualSolution, Guess playerGuess) {
+  static GuessResult calculate(Solution solution, Solution guess) {
     int red = Streams
-        .zip(Streams.stream(actualSolution), Streams.stream(playerGuess.solution),
+        .zip(Streams.stream(solution), Streams.stream(guess),
             (colors, colors2) -> colors == colors2 ? 1 : 0).mapToInt((i) -> i).sum();
 
     int white = 0;
-    ImmutableSet<Colors> colors = ImmutableSet.copyOf(playerGuess.solution.iterator());
+    ImmutableSet<Colors> colors = ImmutableSet.copyOf(guess.iterator());
     for (Colors c : colors) {
-      white += actualSolution.countColors(c);
+      white += solution.countColors(c);
     }
     white -= red;
     return new GuessResult(red, white);
