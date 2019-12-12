@@ -70,7 +70,7 @@ def defineRuntimeConfig(name, runClass, function, consolePort, debugPort) {
 }
 
 def runtimeConfigs = [:]
-runtimeConfigs.engine = defineRuntimeConfig('run', 'com.mrose.embed.VelocityRun', 'ga', 9999, 45555)
+runtimeConfigs.engine = defineRuntimeConfig('mastermind', 'com.mrose.mastermind.StartGame', 'ga', 9999, 45555)
 
 runtimeConfigs.values().each { config ->
     task("${config.name}", dependsOn: classes, type: JavaExec) {
