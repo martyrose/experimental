@@ -55,6 +55,8 @@ public class MintRowPredicate implements Predicate<MintRow> {
       switch (account) {
         case "CASH":
         case "AMEX":
+        case "BLUECASHPREFERRED":
+        case "BLUECASHPREFERRED-SUPPLEMENTARYACCOUNT":
         case "MARTYCHECKING":
         case "BOFA":
         case "BANKONECCACCT":
@@ -64,9 +66,12 @@ public class MintRowPredicate implements Predicate<MintRow> {
         case "TARGETCREDITCARD":
         case "NORDSTROM":
         case "BANANA":
+        case "ATHLETA":
+        case "TJX_REWARDS":
           return true;
         case "BUSINESSADVANTAGECASHREWARDS":
         case "FAMILYSAVINGS":
+        case "HSBCDIRECTSAVINGS":
         case "IGNORE":
         case "2425WWINONAST":
         case "XXXXXX7674":
@@ -76,7 +81,7 @@ public class MintRowPredicate implements Predicate<MintRow> {
           return false;
       }
 
-      throw new IllegalArgumentException("Unknown Account: " + account);
+      return true;
     }
   }
 

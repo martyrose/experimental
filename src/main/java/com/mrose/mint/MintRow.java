@@ -34,8 +34,10 @@ public class MintRow {
     transactionType = values[index++];
     String ignore1 = values[index++];
     accountName = cleanup(values[index++]);
-    labels = values[index++];
-    notes = values[index++];
+    // labels = values[index++];
+    // notes = values[index++];
+labels = "";
+notes = "";
 
     category = cleanup(StringUtils.substringAfterLast(getDescription(), "-"));
   }

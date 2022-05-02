@@ -47,13 +47,13 @@ public class MonthToDate {
   // readlink -f file
   private static final String FILE_PATH = "/tmp/transactions.csv";
   private static final FinancialPeriod PRIMARY_PERIOD =
-      new FinancialPeriod(new YearMonth(2019, DateTimeConstants.NOVEMBER).toInterval(), 1);
+      new FinancialPeriod(new YearMonth(2021, DateTimeConstants.DECEMBER).toInterval(), 1);
   private static final FinancialPeriod EXTENDED_PERIOD =
       new FinancialPeriod(
           new Interval(
-              new YearMonth(2019, DateTimeConstants.JANUARY).toInterval().getStart(),
-              new YearMonth(2019, DateTimeConstants.NOVEMBER).toInterval().getEnd()),
-          11);
+              new YearMonth(2021, DateTimeConstants.JANUARY).toInterval().getStart(),
+              new YearMonth(2021, DateTimeConstants.DECEMBER).toInterval().getEnd()),
+          12);
   private static boolean INCLUDE_LINE_DETAILS = false;
   private static boolean INCLUDE_EXTENDED_PERIOD = true;
 
